@@ -1,0 +1,102 @@
+class Sounds {
+
+  constructor() {
+    this.audioElements = {};
+    this.initialized = false;
+    this.gameSoundsMuted = false;
+    this.musicMuted = false;
+  }
+
+  initializeAudioElements() {
+    this.audioElements = {
+      "background-music": new Audio("/audio/background-music.mp3"),
+      "bottle-splash": new Audio("/audio/bottle-splash.mp3"),
+      "bottle-throw": new Audio("/audio/bottle-throw.mp3"),
+      "bottle-collect": new Audio("/audio/bottle-collect.mp3"),
+      "character-hurt": new Audio("/audio/character-hurt.mp3"),
+      "chicken": new Audio("/audio/chicken.mp3"),
+      "coin": new Audio("/audio/coin.mp3"),
+      "endboss": new Audio("/audio/endboss.mp3"),
+      "jump": new Audio("/audio/jump.mp3"),
+      "small-chicken": new Audio("/audio/small-chicken.mp3"),
+      "walk": new Audio("/audio/walk.mp3"),
+      "snoring": new Audio("/audio/snoring.mp3"),
+    };
+  }
+
+  initializeAudio() {
+    if (!this.initialized) {
+      this.initializeAudioElements();
+      this.audioContext = new AudioContext();
+      
+      const loadPromises = Object.values(this.audioElements).map(audio => {
+        return new Promise((resolve) => {
+          audio.preload = "auto";
+          audio.load();
+          audio.addEventListener('canplaythrough', resolve, { once: true });
+        });
+      });
+      
+      Promise.all(loadPromises).then(() => this.initialized = true);
+      
+      return true;
+    }
+    return false;
+  }
+
+  async playAudio(audioName) {
+    const audio = this.audioElements[audioName];
+    if (!audio || !this.initialized) return;
+    
+    try {
+        audio.muted = this.gameSoundsMuted;
+        audio.volume = 1.0;
+        
+        if (audioName === "background-music" || audioName === "snoring") {
+            audio.loop = true;
+            if (!this.isPlaying(audioName)) {
+                await audio.play();
+            }
+        } else {
+            await audio.play();
+        }
+    } catch (error) {}
+  }
+
+  toggleGameSounds(shouldMute) {
+    this.gameSoundsMuted = shouldMute;
+    Object.entries(this.audioElements).forEach(([key, audio]) => {
+        if (key !== 'background-music') {
+            audio.muted = shouldMute;
+        }
+    });
+  }
+
+  toggleMusic(shouldMute) {
+    this.musicMuted = shouldMute;
+    const backgroundMusic = this.audioElements['background-music'];
+    if (backgroundMusic) {
+        if (shouldMute) {
+            backgroundMusic.pause();
+            backgroundMusic.currentTime = 0;
+        } else {
+            backgroundMusic.play();
+            backgroundMusic.loop = true;
+        }
+        backgroundMusic.muted = shouldMute;
+    }
+  }
+
+  pauseAudio(audioName) {
+    const audio = this.audioElements[audioName];
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      if (audioName === "snoring") audio.loop = false;
+    }
+  }
+
+  isPlaying(sound) {
+    return this.audioElements[sound] && !this.audioElements[sound].paused;
+  }
+}

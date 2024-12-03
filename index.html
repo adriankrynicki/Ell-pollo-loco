@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="shortcut icon"
+      href="/img/6_salsa_bottle/salsa_bottle.png"
+      type="image/x-icon"
+    />
+    <title>El pollo loco</title>
+  </head>
+  <body>
+    <main class="main-container start-screen">
+      <div class="nav-container">
+        <div id="nav-controls" class="nav-controls">
+          <button class="button-style nav-button" data-section="play">
+            Play Game
+          </button>
+          <button class="button-style nav-button" data-section="info">
+            Controls
+          </button>
+          <button class="button-style nav-button" data-section="credits">
+            Credits
+          </button>
+        </div>
+        <div id="audio-controls" class="d-none">
+          <button class="button-style audio-button" id="play">Music ON</button>
+          <button class="d-none" id="pause">Music OFF</button>
+          <button class="button-style audio-button" id="soundOn">
+            Sounds ON
+          </button>
+          <button class="d-none" id="soundOff">Sounds OFF</button>
+        </div>
+      </div>
+      <div id="game-container" class="game-container">
+        <button
+          id="playGameButton"
+          class="play-game-button button-style"
+        >
+          START GAME
+        </button>
+      </div>
+      <canvas class="d-none" id="canvas" width="720" height="480"> </canvas>
+      <img id="loadingGif" src="/img/drawing-2802_128.gif" class="d-none loading-animation" alt="Loading...">
+    </main>
+
+
+
+    <script src="models/drawable-object.class.js"></script>
+    <script src="models/movable-object.class.js"></script>
+    <script src="models/sounds.class.js"></script>
+    <script src="models/background-object.class.js"></script>
+    <script src="models/clouds.class.js"></script>
+    <script src="models/character.class.js"></script>
+    <script src="models/status-bar.class.js"></script>
+    <script src="models/hp-character-statusbar.class.js"></script>
+    <script src="models/coin-stausbar.class.js"></script>
+    <script src="models/bottle-statusbar.class.js"></script>
+    <script src="models/hp-endboss-statusbar.class.js"></script>
+    <script src="models/keyboard.class.js"></script>
+    <script src="models/level.class.js"></script>
+    <script src="models/throwable-bottle.class.js"></script>
+    <script src="models/endboss.class.js"></script>
+    <script src="models/small-chicken.class.js"></script>
+    <script src="models/chicken.class.js"></script>
+    <script src="models/collectable-bottles.class.js"></script>
+    <script src="models/collectable-coin.class.js"></script>
+    <script src="levels/level1.js"></script>
+    <script src="models/world.class.js"></script>
+    <script src="js/tamplates.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
