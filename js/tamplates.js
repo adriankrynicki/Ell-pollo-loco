@@ -8,20 +8,20 @@ function controlsHTML() {
         <div class="arrow-keys-content">
           <div class="up-key-container">
             <div class="arrow-key-border">
-              <img class="arrow-key" src="/img/arrow-up.png" alt="up" />
+              <img class="arrow-key" src="img/arrow_up.png" alt="up" />
             </div>
             <p>Jump</p>
           </div>
           <div class="left-right-key-container">
             <div class="left-key-container">
               <div class="arrow-key-border">
-                <img class="arrow-key" src="/img/arrow-left.png" alt="up" />
+                <img class="arrow-key" src="img/arrow_left.png" alt="up" />
               </div>
               <p>Move Left</p>
             </div>
             <div class="right-key-container">
               <div class="arrow-key-border">
-                <img class="arrow-key" src="/img/arrow-right.png" alt="up" />
+                <img class="arrow-key" src="img/arrow_right.png" alt="up" />
               </div>
               <p>Move Right</p>
             </div>

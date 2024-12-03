@@ -9,18 +9,18 @@ class Sounds {
 
   initializeAudioElements() {
     this.audioElements = {
-      "background-music": new Audio("/audio/background-music.mp3"),
-      "bottle-splash": new Audio("/audio/bottle-splash.mp3"),
-      "bottle-throw": new Audio("/audio/bottle-throw.mp3"),
-      "bottle-collect": new Audio("/audio/bottle-collect.mp3"),
-      "character-hurt": new Audio("/audio/character-hurt.mp3"),
-      "chicken": new Audio("/audio/chicken.mp3"),
-      "coin": new Audio("/audio/coin.mp3"),
-      "endboss": new Audio("/audio/endboss.mp3"),
-      "jump": new Audio("/audio/jump.mp3"),
-      "small-chicken": new Audio("/audio/small-chicken.mp3"),
-      "walk": new Audio("/audio/walk.mp3"),
-      "snoring": new Audio("/audio/snoring.mp3"),
+      "background-music": new Audio("audio/background_music.mp3"),
+      "bottle-splash": new Audio("audio/bottle_splash.mp3"),
+      "bottle-throw": new Audio("audio/bottle_throw.mp3"),
+      "bottle-collect": new Audio("audio/bottle_collect.mp3"),
+      "character-hurt": new Audio("audio/character_hurt.mp3"),
+      "chicken": new Audio("audio/chicken.mp3"),
+      "coin": new Audio("audio/coin.mp3"),
+      "endboss": new Audio("audio/endboss.mp3"),
+      "jump": new Audio("audio/jump.mp3"),
+      "small-chicken": new Audio("audio/small_chicken.mp3"),
+      "walk": new Audio("audio/walk.mp3"),
+      "snoring": new Audio("audio/snoring.mp3"),
     };
   }
 
@@ -52,7 +52,7 @@ class Sounds {
         audio.muted = this.gameSoundsMuted;
         audio.volume = 1.0;
         
-        if (audioName === "background-music" || audioName === "snoring") {
+        if (audioName === "background_music" || audioName === "snoring") {
             audio.loop = true;
             if (!this.isPlaying(audioName)) {
                 await audio.play();
@@ -66,7 +66,7 @@ class Sounds {
   toggleGameSounds(shouldMute) {
     this.gameSoundsMuted = shouldMute;
     Object.entries(this.audioElements).forEach(([key, audio]) => {
-        if (key !== 'background-music') {
+        if (key !== 'background_music') {
             audio.muted = shouldMute;
         }
     });
@@ -74,7 +74,7 @@ class Sounds {
 
   toggleMusic(shouldMute) {
     this.musicMuted = shouldMute;
-    const backgroundMusic = this.audioElements['background-music'];
+    const backgroundMusic = this.audioElements['background_music'];
     if (backgroundMusic) {
         if (shouldMute) {
             backgroundMusic.pause();

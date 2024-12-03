@@ -4,7 +4,6 @@ class SmallChicken extends MovableObject {
   width = 50;
   hp = 5;
   isJumping = false;
-  dead_sound = new Audio("/audio/small-chicken.mp3");
   IMAGES_WALKING = [
     "img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
     "img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
@@ -69,6 +68,6 @@ class SmallChicken extends MovableObject {
   }
 
   deadSmallChickenSound() {
-    world.sounds.playAudio("small-chicken");
+    world.sounds.playAudio("small_chicken");
   }
 }

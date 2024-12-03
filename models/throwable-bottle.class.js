@@ -63,11 +63,11 @@ class ThrowableBottles extends MovableObject {
   }
 
   bottleSplashSound() {
-    world.sounds.playAudio("bottle-splash");  
+    world.sounds.playAudio("bottle_splash");  
   }
 
   bottleThrowSound() {
-    world.sounds.playAudio("bottle-throw");
+    world.sounds.playAudio("bottle_throw");
   }
 
 }

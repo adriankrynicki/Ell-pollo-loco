@@ -207,7 +207,7 @@ class World {
       );
       const bottleId = Date.now();
       this.throwableBottles.set(bottleId, bottle);
-      this.sounds.playAudio("bottle-throw");
+      this.sounds.playAudio("bottle_throw");
       this.spacebarPressed = true;
     } else if (!this.keyboard.D) {
       this.spacebarPressed = false;

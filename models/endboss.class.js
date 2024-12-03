@@ -5,7 +5,6 @@ class Endboss extends MovableObject {
   acceleration = 10;
   speed = 80;
   isAttacking = false; 
-  hurt_sound = new Audio("/audio/endboss.mp3");
   IMAGES_WALKING = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
     "img/4_enemie_boss_chicken/1_walk/G2.png",

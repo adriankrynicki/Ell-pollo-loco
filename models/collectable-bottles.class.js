@@ -2,7 +2,6 @@ class CollectableBottles extends DrawableObject {
     y = 350;
     height = 90;
     width = 80;
-    bottle_collect_sound = new Audio("/audio/bottle-collect.mp3");
 
     constructor(imagePath, bottleCount) {
       super().loadImage(imagePath);
@@ -26,7 +25,7 @@ class CollectableBottles extends DrawableObject {
 
     
   bottleCollectSound() {
-    world.sounds.playAudio("bottle-collect");
+    world.sounds.playAudio("bottle_collect");
   }
   }
   

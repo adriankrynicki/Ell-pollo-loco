@@ -245,7 +245,7 @@ class Character extends MovableObject {
   }
 
   characterHurtSound() {
-    this.world.sounds.playAudio("character-hurt");
+    this.world.sounds.playAudio("character_hurt");
   }
 
   checkWalkSound() {
