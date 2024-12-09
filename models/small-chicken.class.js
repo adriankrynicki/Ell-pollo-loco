@@ -4,6 +4,8 @@ class SmallChicken extends MovableObject {
   width = 50;
   hp = 5;
   isJumping = false;
+  isDeathAnimationPlaying = false;
+  distanceTraveled = 0;
   IMAGES_WALKING = [
     "img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
     "img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
@@ -14,6 +16,7 @@ class SmallChicken extends MovableObject {
   constructor(chickenCount) {
     super().loadImage("img/3_enemies_chicken/chicken_small/1_walk/1_w.png");
     this.loadImages(this.IMAGES_WALKING);
+    this.number = chickenCount;
 
     this.x = this.getRandomCoordinates(chickenCount);
     this.speed = 10 + Math.random() * 3;
@@ -40,22 +43,35 @@ class SmallChicken extends MovableObject {
 
   animate() {
     let walkAnimation = setInterval(() => {
-      if (!this.isJumping && !this.isAboveGround()) {
+      if (!this.isDeathAnimationPlaying) {
+        if (!this.isJumping && !this.isAboveGround()) {
+          this.playAnimation(this.IMAGES_WALKING);
+          this.randomJump();
+          this.isJumping = false;
+        }
         this.playAnimation(this.IMAGES_WALKING);
-        this.randomJump();
-        this.isJumping = false;
-      }
-      this.playAnimation(this.IMAGES_WALKING);
 
-      this.OtherDirection = false;
+        this.OtherDirection = false;
+      }
     }, 60);
 
     setInterval(() => {
-      if (this.isDead()) {
+      if (this.isDead() && !this.isDeathAnimationPlaying) {
         clearInterval(walkAnimation);
-        this.loadImage(this.IMAGE_DEAD);
+        this.playDeathAnimation();
       }
     }, 500);
+  }
+
+  playDeathAnimation() {
+    return new Promise(resolve => {
+      this.isDeathAnimationPlaying = true;
+      this.loadImage(this.IMAGE_DEAD);
+      setTimeout(() => {
+        this.isDeathAnimationPlaying = false;
+        resolve();
+      }, 200);
+    });
   }
 
   randomJump() {

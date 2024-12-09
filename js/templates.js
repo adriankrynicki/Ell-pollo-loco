@@ -50,6 +50,21 @@ function playGameButtonHTML() {
   `;
 }
 
+function inGameMenuHTML() {
+  return /*html*/ `
+    <div class="in-game-menu-container">
+      <div class="in-game-menu-content">
+        <h3>PAUSE</h3>
+        <div class="in-game-menu-buttons">
+        <button onclick="closeInGameMenu()" class="button-style menu-button" id="resume">Resume game</button>
+        <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
+        <button onclick="backToMenu()" class="button-style menu-button" id="backToMenu">Back to menu</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function creditsHTML() {
   return /*html*/ `
     <div class="credits-container">

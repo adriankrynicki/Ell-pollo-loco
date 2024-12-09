@@ -42,7 +42,7 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
-  constructor() {
+  constructor(number) {
     super().loadImage(this.IMAGES_ALERT[0]);
     this.loadImages(this.IMAGES_ALERT);
     this.loadImages(this.IMAGES_WALKING);
@@ -51,6 +51,7 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_ATTACK);
     this.applayGravity();
 
+    this.number = number;
     this.x = 2000;
     this.EndbossAnimation();
   }

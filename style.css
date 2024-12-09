@@ -16,6 +16,7 @@ body {
 }
 
 canvas {
+  display: block;
   position: absolute;
   background-color: black;
   display: block;
@@ -66,9 +67,11 @@ canvas {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  height: 100%;
+  height: 96%;
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
+  margin: 16px 0 0 0;
+  border-radius: 5px;
 }
 
 .info-container h1 {
@@ -85,6 +88,23 @@ canvas {
     rgb(163, 67, 33) 0,
     rgb(255, 203, 25) 100%
   );
+}
+
+.audio-button:focus {
+  box-shadow: rgb(255, 203, 25) 0 0 0 1.5px inset,
+    rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+    rgb(255, 203, 25) 0 -3px 0 inset;
+}
+
+.audio-button:hover {
+  box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(255, 203, 25) 0 -3px 0 inset;
+  transform: translateY(-2px);
+}
+
+.audio-button:active {
+  box-shadow: rgb(255, 203, 25) 0 3px 7px inset;
+  transform: translateY(2px);
 }
 
 .nav-container {
@@ -112,25 +132,25 @@ canvas {
   max-width: 110px;
   background-image: radial-gradient(
     100% 100% at 100% 0,
-    rgb(216,229,234) 0,
-    rgb(20,161,202) 100%
+    rgb(216, 229, 234) 0,
+    rgb(20, 161, 202) 100%
   );
 }
 
 .nav-button:focus {
-  box-shadow: rgb(216,229,234) 0 0 0 1.5px inset,
+  box-shadow: rgb(216, 229, 234) 0 0 0 1.5px inset,
     rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
-    rgb(216,229,234) 0 -3px 0 inset;
+    rgb(216, 229, 234) 0 -3px 0 inset;
 }
 
 .nav-button:hover {
   box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
-    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(216,229,234) 0 -3px 0 inset;
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(216, 229, 234) 0 -3px 0 inset;
   transform: translateY(-2px);
 }
 
 .nav-button:active {
-  box-shadow: rgb(216,229,234) 0 3px 7px inset;
+  box-shadow: rgb(216, 229, 234) 0 3px 7px inset;
   transform: translateY(2px);
 }
 
@@ -192,22 +212,6 @@ canvas {
   transform: translateY(2px);
 }
 
-.loading-screen {
-  position: relative;
-}
-
-.loading-screen::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("/img/desert3.png") center center no-repeat;
-  background-color: rgba(0, 0, 0, 0.8);
-  z-index: 1000;
-}
-
 .controls-container {
   display: flex;
   flex-direction: row;
@@ -244,7 +248,6 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-
 }
 
 .d-key-border {
@@ -281,6 +284,73 @@ canvas {
   align-items: center;
 }
 
+.in-game-menu-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 720px;
+  height: 480px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 5px;
+  z-index: 999;
+}
+
+.in-game-menu-content {
+  width: 260px;
+  height: 370px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-image: url("img/desert3.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 5px solid rgba(0, 0, 0, 0.7);
+  border-radius: 5px;
+  box-shadow: 0 0 10px 0 rgba(255, 249, 249, 0.7);
+}
+
+.in-game-menu-content h3 {
+  font-size: 56px;
+  margin: 30px 0 40px 0;
+  font-weight: bold;
+}
+
+.in-game-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.menu-button {
+  color: #000000;
+  height: 48px;
+  font-size: 24px;
+  min-width: 210px;
+  max-width: 210px;
+  background-image: radial-gradient(
+    100% 100% at 100% 0,
+    rgb(255 255 255) 0,
+    rgb(255, 146, 61) 100%
+  );
+}
+
+.menu-button:hover {
+  box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(0, 0, 0) 0 -3px 0 inset;
+  transform: translateY(-2px);
+}
+
+.menu-button:active {
+  box-shadow: rgb(0, 0, 0) 0 3px 7px inset;
+  transform: translateY(2px);
+}
+
 .credits-container {
   width: 100%;
   height: 100%;
@@ -303,25 +373,25 @@ canvas {
   font-size: 14px;
   background-image: radial-gradient(
     100% 100% at 100% 0,
-    rgb(216,229,234) 0,
-    rgb(121,158,38) 100%
+    rgb(216, 229, 234) 0,
+    rgb(121, 158, 38) 100%
   );
 }
 
 .credits-button:focus {
-  box-shadow: rgb(216,229,234) 0 0 0 1.5px inset,
+  box-shadow: rgb(216, 229, 234) 0 0 0 1.5px inset,
     rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
-    rgb(216,229,234) 0 -3px 0 inset;
+    rgb(216, 229, 234) 0 -3px 0 inset;
 }
 
 .credits-button:hover {
   box-shadow: rgba(45, 35, 66, 0.4) 0 4px 8px,
-    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(216,229,234) 0 -3px 0 inset;
+    rgba(45, 35, 66, 0.3) 0 7px 13px -3px, rgb(216, 229, 234) 0 -3px 0 inset;
   transform: translateY(-2px);
 }
 
 .credits-button:active {
-  box-shadow: rgb(216,229,234) 0 3px 7px inset;
+  box-shadow: rgb(216, 229, 234) 0 3px 7px inset;
   transform: translateY(2px);
 }
 
@@ -334,12 +404,13 @@ canvas {
 
 .legal-notice-container {
   width: 100%;
-  height: 100%;
+  height: 96%;
   display: flex;
   flex-direction: column;
   align-items: center;
   color: white;
   background-color: rgba(0, 0, 0, 0.7);
+  margin: 16px 0 0 0;
 }
 
 .legal-notice-container h1 {
@@ -356,9 +427,10 @@ canvas {
   flex-direction: column;
   align-items: center;
   overflow-y: scroll;
-  max-height: 388px;
+  max-height: 372px;
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
+  margin: 16px 0 0 0;
 }
 
 .privacy-policy-container h1 {
@@ -371,14 +443,93 @@ canvas {
   margin: 0;
 }
 
-.loading-animation {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
+.loading-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px;
+  font-weight: bold;
+  background-image: url("img/desert1.jpg");
+  background-size: cover;
+  background-position: center;
+  width: 720px;
+  height: 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  border: 5px solid rgb(163, 67, 33);
 }
 
-.loading-screen .loading-animation {
-    display: block !important;
+.loading-text span {
+  opacity: 0.8;
+  animation: colorChange 3.5s infinite;
+}
+
+/* Verzögerung für jeden Buchstaben */
+.loading-text span:nth-child(1) {
+  animation-delay: 0s;
+} /* L */
+.loading-text span:nth-child(2) {
+  animation-delay: 0.5s;
+} /* O */
+.loading-text span:nth-child(3) {
+  animation-delay: 1s;
+} /* A */
+.loading-text span:nth-child(4) {
+  animation-delay: 1.5s;
+} /* D */
+.loading-text span:nth-child(5) {
+  animation-delay: 2s;
+} /* I */
+.loading-text span:nth-child(6) {
+  animation-delay: 2.5s;
+} /* N */
+.loading-text span:nth-child(7) {
+  animation-delay: 3s;
+} /* G */
+
+@keyframes colorChange {
+  0% {
+    color: #ff0000;
+  } /* Rot */
+  14% {
+    color: #ff7f00;
+  } /* Orange */
+  28% {
+    color: #ffff00;
+  } /* Gelb */
+  42% {
+    color: #00ff00;
+  } /* Grün */
+  56% {
+    color: #0000ff;
+  } /* Blau */
+  70% {
+    color: #4b0082;
+  } /* Indigo */
+  84% {
+    color: #8f00ff;
+  } /* Violett */
+  100% {
+    color: #ff0000;
+  } /* Zurück zu Rot */
+}
+
+/* Für die loading-screen Klasse */
+.loading-text {
+  display: flex !important;
+}
+
+@media only screen and (max-width: 720px) {
+  canvas {
+    width: 100%;
+  }
+}
+
+@media only screen and (max-height: 480px) {
+  canvas {
+    height: 100vh;
+  }
 }

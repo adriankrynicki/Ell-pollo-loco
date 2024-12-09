@@ -8,6 +8,8 @@ class Character extends MovableObject {
   isSleeping = false;
   userIsPlaying = false;
   sleepCountdown = 0;
+  bottleThrow = false;
+  bottleThrowTimer = 0;
 
   IMAGES_WALKING = [
     "img/2_character_pepe/2_walk/W-21.png",
@@ -87,13 +89,13 @@ class Character extends MovableObject {
       interval: 120,
     },
     {
-      condition: () => this.isAboveGround() && !this.world?.onAnEnemy,
+      condition: () => this.isAboveGround() && !this.isOnEnemy(),
       state: "jumping",
       images: this.IMAGES_JUMPING,
       interval: 200,
     },
     {
-      condition: () => this.isAboveGround() && this.world?.onAnEnemy,
+      condition: () => this.isAboveGround() && this.isOnEnemy(),
       state: "jumpingShort",
       images: this.IMAGES_JUMPING_SHORT,
       interval: 100,
@@ -101,6 +103,12 @@ class Character extends MovableObject {
     {
       condition: () => this.world?.keyboard.RIGHT || this.world?.keyboard.LEFT,
       state: "walking",
+      images: this.IMAGES_WALKING,
+      interval: 60,
+    },
+    {
+      condition: () => this.bottleThrow,
+      state: "dPressed",
       images: this.IMAGES_WALKING,
       interval: 60,
     },
@@ -144,7 +152,7 @@ class Character extends MovableObject {
       this.handleJumpingAnimation();
       this.handleUserInput();
       this.updateCameraPosition();
-      this.checkWalkSound();
+      this.toggleBottleThrow();
     }, 60);
 
     this.handleAnimationStates();
@@ -191,6 +199,20 @@ class Character extends MovableObject {
     }
   }
 
+  isOnEnemy() {
+    return this.world?.collisionHandler.onAnEnemy;
+  }
+
+  toggleBottleThrow() {
+    if (this.bottleThrow) {
+      this.bottleThrowTimer++;
+      if (this.bottleThrowTimer === 5) {
+        this.bottleThrow = false;
+        this.bottleThrowTimer = 0;
+      }
+    }
+  }
+
   startSleeping() {
     if (!this.sleepCountdown) this.sleepCountdown = 0;
     this.sleepCountdown++;
@@ -219,11 +241,16 @@ class Character extends MovableObject {
         return;
       }
 
-      const animation = this.animations.find(a => a.condition()) || 
-        { images: this.IMAGES_IDLE, interval: 220 };
+      const animation = this.animations.find((a) => a.condition()) || {
+        images: this.IMAGES_IDLE,
+        interval: 220,
+      };
 
       this.playAnimation(animation.images);
-      setTimeout(() => requestAnimationFrame(updateAnimation), animation.interval);
+      setTimeout(
+        () => requestAnimationFrame(updateAnimation),
+        animation.interval
+      );
     };
 
     updateAnimation();

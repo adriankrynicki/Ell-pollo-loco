@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <link
       rel="shortcut icon"
-      href="/img/6_salsa_bottle/salsa_bottle.png"
+      href="img/6_salsa_bottle/salsa_bottle.png"
       type="image/x-icon"
     />
     <title>El pollo loco</title>
@@ -32,6 +32,7 @@
             Sounds ON
           </button>
           <button class="d-none" id="soundOff">Sounds OFF</button>
+          <button class="button-style audio-button" id="menu">Pause</button>
         </div>
       </div>
       <div id="game-container" class="game-container">
@@ -43,7 +44,15 @@
         </button>
       </div>
       <canvas class="d-none" id="canvas" width="720" height="480"> </canvas>
-      <img id="loadingGif" src="img/gif.gif" class="d-none loading-animation" alt="Loading...">
+      <div id="loadingText" class="d-none">
+        <span>L</span>
+        <span>O</span>
+        <span>A</span>
+        <span>D</span>
+        <span>I</span>
+        <span>N</span>
+        <span>G</span>
+      </div>
     </main>
 
 
@@ -69,7 +78,9 @@
     <script src="models/collectable-coin.class.js"></script>
     <script src="levels/level1.js"></script>
     <script src="models/world.class.js"></script>
-    <script src="js/tamplates.js"></script>
+    <script src="models/collision-handler.class.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="models/game-state.manager.class.js"></script>
     <script src="js/game.js"></script>
   </body>
 </html>

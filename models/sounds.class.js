@@ -9,18 +9,20 @@ class Sounds {
 
   initializeAudioElements() {
     this.audioElements = {
-      "background-music": new Audio("audio/background_music.mp3"),
-      "bottle-splash": new Audio("audio/bottle_splash.mp3"),
-      "bottle-throw": new Audio("audio/bottle_throw.mp3"),
-      "bottle-collect": new Audio("audio/bottle_collect.mp3"),
-      "character-hurt": new Audio("audio/character_hurt.mp3"),
+      "background_music": new Audio("audio/background_music.mp3"),
+      "bottle_splash": new Audio("audio/bottle_splash.mp3"),
+      "bottle_throw": new Audio("audio/bottle_throw.mp3"),
+      "bottle_collect": new Audio("audio/bottle_collect.mp3"),
+      "character_hurt": new Audio("audio/character_hurt.mp3"),
       "chicken": new Audio("audio/chicken.mp3"),
       "coin": new Audio("audio/coin.mp3"),
       "endboss": new Audio("audio/endboss.mp3"),
       "jump": new Audio("audio/jump.mp3"),
-      "small-chicken": new Audio("audio/small_chicken.mp3"),
+      "small_chicken": new Audio("audio/small_chicken.mp3"),
       "walk": new Audio("audio/walk.mp3"),
       "snoring": new Audio("audio/snoring.mp3"),
+      "win": new Audio("audio/win.mp3"),
+      "lose": new Audio("audio/game_over.mp3"),
     };
   }
 

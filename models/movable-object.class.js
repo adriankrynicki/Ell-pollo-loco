@@ -42,6 +42,15 @@ class MovableObject extends DrawableObject {
     }, 500);
   }
 
+  enemyKick() {
+    let enemykick = setInterval(() => {
+      this.x -= 1;
+    }, 25);
+    setTimeout(() => {
+      clearInterval(enemykick);
+    }, 500);
+  }
+
   moveLeft() {
     this.x -= this.speed;
     this.OtherDirection = true;
@@ -100,7 +109,7 @@ class MovableObject extends DrawableObject {
   }
 
   bottledamage() {
-    this.hp -= 5;
+    this.hp -= 20;
     if (this.hp < 0) {
       this.hp = 0;
     } else {
