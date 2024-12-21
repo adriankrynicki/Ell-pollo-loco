@@ -44,7 +44,7 @@ class MovableObject extends DrawableObject {
 
   enemyKick() {
     let enemykick = setInterval(() => {
-      this.x -= 1;
+      this.x -= 3;
     }, 25);
     setTimeout(() => {
       clearInterval(enemykick);
@@ -109,7 +109,7 @@ class MovableObject extends DrawableObject {
   }
 
   bottledamage() {
-    this.hp -= 20;
+    this.hp -= 40;
     if (this.hp < 0) {
       this.hp = 0;
     } else {
@@ -124,7 +124,7 @@ class MovableObject extends DrawableObject {
   }
 
   hit() {
-    this.hp -= 5;
+    this.hp -= 20;
     if (this.hp < 0) {
       this.hp = 0;
     } else {

@@ -56,7 +56,7 @@ class CollisionHandler {
     });
   }
 
-  checkCollisionFromAbove() {
+  handleJumpOnChicken() {
     const collidingChicken = this.chicken.find(
       (chicken) =>
         this.character.isColliding(chicken) &&
@@ -67,7 +67,9 @@ class CollisionHandler {
     if (collidingChicken) {
       this.handleChickenCollision(collidingChicken);
     }
+  }
 
+  handleJumpOnSmallChicken() {
     const collidingSmallChicken = this.smallChicken.find(
       (smallChicken) =>
         this.character.isColliding(smallChicken) &&
@@ -102,7 +104,7 @@ class CollisionHandler {
       !this.character.isAboveGround() &&
       !this.damageImmune
     ) {
-      this.characterBehaviorAfterCollisionWithEnemy();
+      this.applyEnemyCollisionEffects();
     }
   }
 
@@ -112,7 +114,7 @@ class CollisionHandler {
       !this.character.isAboveGround() &&
       !this.damageImmune
     ) {
-      this.characterBehaviorAfterCollisionWithEnemy();
+      this.applyEnemyCollisionEffects();
     }
   }
 
@@ -121,6 +123,7 @@ class CollisionHandler {
       this.world.canMoveRight = false;
       this.character.hit();
       this.character.Endbosskick();
+      this.character.characterHurtSound();
       setTimeout(() => {
         this.world.canMoveRight = true;
       }, 1000);
@@ -160,7 +163,7 @@ class CollisionHandler {
     }
   }
 
-  characterBehaviorAfterCollisionWithEnemy() {
+  applyEnemyCollisionEffects() {
     this.damageImmune = true;
     this.world.canMoveRight = false;
     this.character.enemyKick();

@@ -153,6 +153,7 @@ class Character extends MovableObject {
       this.handleUserInput();
       this.updateCameraPosition();
       this.toggleBottleThrow();
+      this.checkWalkSound();
     }, 60);
 
     this.handleAnimationStates();
@@ -163,7 +164,7 @@ class Character extends MovableObject {
       this.moveRight();
       this.world.sounds.playAudio("walk");
       this.userIsPlaying = true;
-    }
+    } 
   }
 
   handleWalkingLeft() {
@@ -273,6 +274,10 @@ class Character extends MovableObject {
 
   characterHurtSound() {
     this.world.sounds.playAudio("character_hurt");
+  }
+
+  characterDeadSound() {
+    this.world.sounds.playAudio("character_dead");
   }
 
   checkWalkSound() {

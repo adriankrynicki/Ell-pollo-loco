@@ -9,11 +9,14 @@ class World {
   bottleCollected = 0;
   coinsCollected = 0;
   canMoveRight = true;
-  level = null;
   gamePaused = false;
   gameWon = false;
   gameLost = false;
   keyDPressed = false;
+  onGameEnd = null;
+  gameStateHandled = false;
+  lastCheck = 0;
+  checkInterval = 50; // 50ms zwischen Checks
 
   constructor(canvas, keyboard) {
     this.canvas = canvas;
@@ -24,6 +27,7 @@ class World {
     this.characterHPBar = new CharacterHPBar();
     this.endbossHpBar = new EndbossHpBar();
     this.endboss = null;
+    this.level = null;
     this.gameStateManager = new GameStateManager(this);
     this.collisionHandler = new CollisionHandler(this);
     this.winImage = new Image();
@@ -41,23 +45,6 @@ class World {
     this.level = level;
     this.endboss = this.level.enemies.find((e) => e instanceof Endboss);
     this.draw();
-    this.run();
-  }
-
-  run() {
-    setInterval(() => {
-      if (!this.gamePaused) {
-        this.checkThrowObject();
-        this.checkIfBottleHit();
-        this.checkCollisionsWithEnemies();
-        this.checkCollisionFromAbove();
-        this.checkCollectedBottles();
-        this.checkCollectedCoins();
-        this.checkCharacterAfterJumpOnAnEnemy();
-        this.checkWinOrLose();
-        console.log(this.character.hp);
-      }
-    }, 50);
   }
 
   draw() {
@@ -66,6 +53,8 @@ class World {
       return;
     }
 
+    this.allintervals();
+
     this.clearCanvas();
 
     this.backgroundObjects();
@@ -73,13 +62,41 @@ class World {
     this.drawStatusBars();
     this.displayEndbossHpBar();
 
-    if (this.gameWon) {
-      this.drawWinScreen();
-    } else if (this.gameLost) {
-      this.drawGameOverScreen();
-    }
+    this.drawEndScreen();
+
+    this.gameEndState();
 
     requestAnimationFrame(() => this.draw());
+  }
+
+  allintervals() {
+    const currentTime = performance.now();
+
+    if (currentTime - this.lastCheck >= this.checkInterval) {
+      this.runBasicChecks();
+      this.runBottleActions();
+      this.runJumpActions();
+
+      this.lastCheck = currentTime;
+    }
+  }
+
+  runBasicChecks() {
+    this.checkCollisionsWithEnemies();
+    this.checkCollectedBottles();
+    this.checkCollectedCoins();
+    this.checkWinOrLose();
+  }
+
+  runBottleActions() {
+    this.checkThrowObject();
+    this.checkIfBottleHit();
+  }
+
+  runJumpActions() {
+    this.collisionHandler.handleJumpOnChicken();
+    this.collisionHandler.handleJumpOnSmallChicken();
+    this.collisionHandler.checkCharacterAfterJumpOnAnEnemy();
   }
 
   pauseGame() {
@@ -125,6 +142,21 @@ class World {
   displayEndbossHpBar() {
     if (this.character.x > 1600) {
       this.showEndbossHpBar = true;
+    }
+  }
+
+  drawEndScreen() {
+    if (this.gameWon) {
+      this.drawWinScreen();
+    } else if (this.gameLost) {
+      this.drawGameOverScreen();
+    }
+  }
+
+  gameEndState() {
+    if (!this.gameStateHandled && (this.gameWon || this.gameLost)) {
+      this.gameStateHandled = true;
+      this.onGameEnd?.(this.gameWon ? "won" : "lost");
     }
   }
 
@@ -198,8 +230,9 @@ class World {
     this.collisionHandler.checkCharacterAfterJumpOnAnEnemy();
   }
 
-  checkCollisionFromAbove() {
-    this.collisionHandler.checkCollisionFromAbove();
+  handleJumpOnEnemies() {
+    this.collisionHandler.handleJumpOnChicken();
+    this.collisionHandler.handleJumpOnSmallChicken();
   }
 
   checkCollectedBottles() {
@@ -337,7 +370,7 @@ class World {
       enemy.deadChickenSound();
     } else if (enemy instanceof SmallChicken) {
       enemy.deadSmallChickenSound();
-    } else if (enemy instanceof Endboss) {
+    } else if (enemy instanceof Endboss && this.endboss.hp > 10) {
       enemy.endbossHurtSound();
     }
   }
@@ -361,20 +394,53 @@ class World {
   }
 
   checkWinOrLose() {
-    if (this.character.hp <= 0) {
-      this.gameLost = true;
-      this.sounds.pauseAudio("background_music");
-      this.sounds.playAudio("lose");
-      setTimeout(() => {
-        this.pauseGame();
-      }, 1000);
-    } else if (this.endboss.hp <= 0) {
-      this.gameWon = true;
-      this.sounds.pauseAudio("background_music");
-      this.sounds.playAudio("win");
-      setTimeout(() => {
-        this.pauseGame();
-      }, 1000);
+    if (this.character.hp <= 0 && !this.characterIsDead) {
+      this.handleWinSound();
+    } else if (this.endboss.hp <= 0 && !this.endbossIsDead) {
+      this.handleLoseSound();
     }
+  }
+
+  handleWinSound() {
+    this.gameLost = true;
+    this.characterIsDead = true;
+    this.handleGameOver();
+    this.sounds.playAudio("character_dead");
+    setTimeout(() => {
+      this.sounds.playAudio("lose");
+    }, 1000);
+    document.dispatchEvent(
+      new CustomEvent("gameStateChange", {
+        detail: { state: "lost" },
+      })
+    );
+  }
+
+  handleLoseSound() {
+    this.gameWon = true;
+    this.endbossIsDead = true;
+    this.handleGameOver();
+    this.sounds.playAudio("endboss_dead");
+    setTimeout(() => {
+      this.sounds.playAudio("win");
+    }, 800);
+    document.dispatchEvent(
+      new CustomEvent("gameStateChange", {
+        detail: { state: "won" },
+      })
+    );
+  }
+
+  handleGameOver() {
+    this.sounds.pauseAudio("background_music");
+    setTimeout(() => {
+      this.pauseGame();
+      this.sounds.toggleGameSounds(true);
+      this.sounds.toggleMusic(true);
+    }, 3000);
+  }
+
+  setGameEndCallback(callback) {
+    this.onGameEnd = callback;
   }
 }

@@ -8,9 +8,11 @@ let soundOn = document.getElementById("soundOn");
 let soundOff = document.getElementById("soundOff");
 let playGameButton = document.getElementById("playGameButton");
 let gameContainer = document.getElementById("game-container");
+let controlsContainer = document.getElementById("controls-container");
 let menuButton = document.getElementById("menu");
 let soundsOn = false;
 let musicOn = false;
+let gameOverTimeout;
 
 async function playGame() {
   prepareUIForGameStart();
@@ -35,11 +37,23 @@ function prepareUIForGameStart() {
   let loadingText = document.getElementById("loadingText");
   loadingText.classList.remove("d-none");
   loadingText.classList.add("loading-text");
+
+  gameContainer.innerHTML = "";
 }
 
 function initializeWorld() {
   canvas = document.getElementById("canvas");
   world = new World(canvas, keyboard);
+
+  if (gameOverTimeout) {
+    clearTimeout(gameOverTimeout);
+  }
+
+  world.setGameEndCallback((gameState) => {
+    gameOverTimeout = setTimeout(() => {
+      gameContainer.innerHTML = gameOverHTML(gameState);
+    }, 4000);
+  });
 }
 
 async function loadGameResources() {
@@ -62,18 +76,50 @@ function finalizeGameStart() {
   let audioControls = document.getElementById("audio-controls");
   audioControls.classList.remove("d-none");
   audioControls.classList.add("audio-controls");
+  toggleSoundButtons(false);
+  toggleMusicButtons(false);
+
+  // Mobile Controls für kleine Bildschirme
+  if (window.innerWidth < 1000) {
+    console.log("Initialisiere Mobile Controls in finalizeGameStart");
+
+    if (controlsContainer) {
+      controlsContainer.classList.remove("d-none");
+      controlsContainer.classList.add("controls-container");
+      controlsContainer.innerHTML = responsiveControlsHTML();
+    }
+  }
 
   canvas.classList.remove("d-none");
-  playGameButton.classList.add("d-none");
   world.setLevel(level1);
   keyboardActive = true;
 }
 
+// Kompakte Control-Funktionen mit automatischem Reset
+const controls = {
+  left: () => {
+    resetKeyboard();
+    keyboard.LEFT = true;
+  },
+  right: () => {
+    resetKeyboard();
+    keyboard.RIGHT = true;
+  },
+  jump: () => {
+    resetKeyboard();
+    keyboard.UP = true;
+  },
+  throwBottle: () => {
+    resetKeyboard();
+    keyboard.D = true;
+  },
+};
+
 function updateGameContainer(section) {
   let contentMap = {
     info: controlsHTML,
-    play: playGameButtonHTML,
     credits: creditsHTML,
+    play: playGameButtonHTML,
   };
 
   if (contentMap[section]) {
@@ -92,7 +138,7 @@ function updateCreditsContainer(section) {
     if (creditsContent) {
       creditsContent.innerHTML = contentMap[section]();
     } else {
-      console.error("credits-content Element nicht gefunden");
+      console.error("Not found credits-content");
     }
   }
 }
@@ -144,64 +190,64 @@ function handleMusicToggle() {
 function openInGameMenu() {
   keyboardActive = false;
   world.pauseGame();
-  
+
   // Speichere den aktuellen Zustand der Musik und Sounds
   soundsOn = !soundOff.classList.contains("d-none");
   musicOn = !musicOff.classList.contains("d-none");
 
   // Pause Sounds und Musik
   if (world && world.sounds) {
-    world.sounds.toggleGameSounds(true);  // Mute game sounds
-    world.sounds.toggleMusic(true);       // Pause background music
+    world.sounds.toggleGameSounds(true); // Mute game sounds
+    world.sounds.toggleMusic(true); // Pause background music
   }
-  
+
   gameContainer.innerHTML = inGameMenuHTML();
 }
 
 function closeInGameMenu() {
   keyboardActive = true;
-  keyboard.reset();
+  resetKeyboard();
   world.resumeGame();
-  
-  // Setze Sounds und Musik fort, basierend auf dem gespeicherten Zustand
+
   if (world && world.sounds) {
-    world.sounds.toggleGameSounds(!soundsOn);  // Unmute game sounds if they were on
-    world.sounds.toggleMusic(!musicOn);        // Resume background music if it was on
+    world.sounds.toggleGameSounds(!soundsOn);
+    world.sounds.toggleMusic(!musicOn);
   }
-  
-  gameContainer.innerHTML = '';
+
+  gameContainer.innerHTML = "";
 }
 
-function updateUIElements(elements) {
+function updateUIElements(uiElements) {
   canvas.classList.add("d-none");
-  elements.nav.classList.toggle("nav-controls", true);
-  elements.nav.classList.toggle("d-none", false);
-  elements.audio.classList.toggle("audio-controls", false);
-  elements.audio.classList.toggle("d-none", true);
-}
-
-function restorePlayButton(elements) {
-  gameContainer.innerHTML = playGameButtonHTML();
-  playGameButton.classList.toggle("d-none", false);
-  playGameButton.classList.add("play-game-button", "button-style");
-  elements.main.classList.add("start-screen");
+  uiElements.nav.classList.add("nav-controls");
+  uiElements.nav.classList.remove("d-none");
+  uiElements.audio.classList.remove("audio-controls");
+  uiElements.audio.classList.add("d-none");
+  uiElements.main.classList.add("start-screen");
 }
 
 function backToMenu() {
-  const elements = {
+  const uiElements = {
     main: document.getElementsByTagName("main")[0],
     nav: document.getElementById("nav-controls"),
     audio: document.getElementById("audio-controls"),
   };
+  gameContainer.innerHTML = "";
 
-  world.pauseGame();
-  updateUIElements(elements);
-  restorePlayButton(elements);
+  if (world) {
+    world.pauseGame();
+  }
+  if (gameOverTimeout) {
+    clearTimeout(gameOverTimeout);
+    gameOverTimeout = null;
+  }
+
+  updateUIElements(uiElements);
+  gameContainer.innerHTML = playGameButtonHTML();
 }
 
 function resetKeyboard() {
   keyboard.UP = false;
-  keyboard.DOWN = false;
   keyboard.LEFT = false;
   keyboard.RIGHT = false;
   keyboard.D = false;
@@ -209,12 +255,17 @@ function resetKeyboard() {
 
 function restartGame() {
   let audioControls = document.getElementById("audio-controls");
-  gameContainer.innerHTML = '';
+  gameContainer.innerHTML = "";
+  if (gameOverTimeout) {
+    clearTimeout(gameOverTimeout);
+    gameOverTimeout = null;
+  }
 
   playGame();
 
   audioControls.classList.add("d-none");
   audioControls.classList.remove("audio-controls");
+  canvas.classList.add("d-none");
 }
 
 function initializeAudioListeners() {
@@ -225,22 +276,25 @@ function initializeAudioListeners() {
   menuButton.addEventListener("click", openInGameMenu);
 }
 
+const sectionHandlers = {
+  info: () => updateGameContainer("info"),
+  play: () => updateGameContainer("play"),
+  credits: () => {
+    updateGameContainer("credits");
+    updateCreditsContainer("legalNotice");
+  },
+  legalNotice: () => updateCreditsContainer("legalNotice"),
+  privacyPolicy: () => updateCreditsContainer("privacyPolicy"),
+};
+
 function initializeNavigationListeners() {
   document.addEventListener("click", (e) => {
     let button = e.target.closest("[data-section]");
     if (!button) return;
 
     let section = button.dataset.section;
-
-    if (section === "legalNotice" || section === "privacyPolicy") {
-      let creditsContent = document.getElementById("credits-content");
-      if (creditsContent) {
-        updateCreditsContainer(section);
-      } else {
-        console.error("credits-content Element nicht gefunden");
-      }
-    } else {
-      updateGameContainer(section);
+    if (sectionHandlers[section]) {
+      sectionHandlers[section]();
     }
   });
 }
@@ -248,34 +302,30 @@ function initializeNavigationListeners() {
 function initializeKeyboardListeners() {
   window.addEventListener("keydown", (e) => {
     if (!keyboardActive) return;
-    
+
     if (e.keyCode == 38) keyboard.UP = true;
     if (e.keyCode == 37) keyboard.LEFT = true;
     if (e.keyCode == 39) keyboard.RIGHT = true;
-    if (e.keyCode == 40) keyboard.DOWN = true;
     if (e.keyCode == 68) keyboard.D = true;
   });
 
   window.addEventListener("keyup", (e) => {
     if (!keyboardActive) return;
-    
+
     if (e.keyCode == 38) keyboard.UP = false;
     if (e.keyCode == 37) keyboard.LEFT = false;
     if (e.keyCode == 39) keyboard.RIGHT = false;
-    if (e.keyCode == 40) keyboard.DOWN = false;
     if (e.keyCode == 68) keyboard.D = false;
-  }); 
+  });
 }
 
-function initializeGameListeners() {
-  if (playGameButton) {
-    playGameButton.addEventListener("click", playGame);
-  }
+function initializePlayGameButton() {
+  gameContainer.innerHTML = playGameButtonHTML();
 }
 
 initializeAudioListeners();
 initializeNavigationListeners();
 initializeKeyboardListeners();
 document.addEventListener("DOMContentLoaded", () => {
-  initializeGameListeners();
+  initializePlayGameButton();
 });

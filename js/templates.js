@@ -41,12 +41,9 @@ function controlsHTML() {
 
 function playGameButtonHTML() {
   return /*html*/ `
-    <button
-          id="playGameButton"
-          class="play-game-button button-style"
-          onclick="playGame()">
-          START GAME
-        </button>
+    <button onclick="playGame()" id="playGameButton" class="play-game-button button-style">
+      START GAME
+    </button>
   `;
 }
 
@@ -57,6 +54,20 @@ function inGameMenuHTML() {
         <h3>PAUSE</h3>
         <div class="in-game-menu-buttons">
         <button onclick="closeInGameMenu()" class="button-style menu-button" id="resume">Resume game</button>
+        <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
+        <button onclick="backToMenu()" class="button-style menu-button" id="backToMenu">Back to menu</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function gameOverHTML(gameState) {
+  return /*html*/ `
+    <div class="in-game-menu-container">
+      <div class="in-game-menu-content">
+        <h3>You ${gameState === 'won' ? 'won' : 'lost'}</h3>
+        <div class="in-game-menu-buttons">
         <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
         <button onclick="backToMenu()" class="button-style menu-button" id="backToMenu">Back to menu</button>
         </div>
@@ -87,13 +98,13 @@ function creditsHTML() {
 function legalNoticeHTML() {
   return /*html*/ `
     <div class="legal-notice-container">
-      <h1>Impressum</h1>
-      <p><b>Angaben gemäß § 5 TMG</b></p>
+      <h1>Imprint</h1>
+      <p><b>Information in accordance with Section 5 TMG</b></p>
       <p>Adrian Krynicki</p>
       <p>Gerauer Straße 96a</p>
       <p>60528 Frankfurt am Main</p>
       <p></p>
-      <p><b>Kontakt</b></p>
+      <p><b>Contact</b></p>
       <p>adrian.krynicki88@gmail.com</p>
       <p>+49 172 72 71 417</p>
     </div>
@@ -103,7 +114,7 @@ function legalNoticeHTML() {
 function privacyPolicyHTML() {
   return /*html*/ `
       <div class="privacy-policy-container">
-      <h1>Datenschutz</h1>
+      <h1>Privacy Policy</h1>
       <p>
         1. Data Protection at a Glance
         General Information: The following information provides a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to personally identify you. For detailed information about data protection, please refer to our Privacy Policy listed below this text.
@@ -212,3 +223,53 @@ function privacyPolicyHTML() {
     </div>
   `;
 }
+
+function responsiveControlsHTML() { 
+  return /*html*/ `
+        <div class="buttons-left-container">
+      <button
+        onmousedown="controls.jump()"
+        onmouseup="resetKeyboard()"
+        ontouchstart="controls.jump()"
+        ontouchend="reset()"
+        id="jump"
+        class="controll-button"
+      >
+        Jump
+      </button>
+      <button
+        onmousedown="controls.left()"
+        onmouseup="resetKeyboard()"
+        ontouchstart="controls.left()"
+        ontouchend="reset()"
+        id="left"
+        class="controll-button"
+      >
+        Left
+      </button>
+    </div>
+    <div class="buttons-right-container">
+      <button
+        onmousedown="controls.throwBottle()" 
+        onmouseup="resetKeyboard()"
+        ontouchstart="controls.throwBottle()"
+        ontouchend="reset()"
+        id="throw"
+        class="controll-button"
+      >
+        Throw
+      </button>
+      <button
+        onmousedown="controls.right()"
+        onmouseup="resetKeyboard()"
+        ontouchstart="controls.right()"
+        ontouchend="reset()"
+        id="right"
+        class="controll-button"
+      >
+        Right
+      </button>
+    </div>
+  `; 
+}
+
