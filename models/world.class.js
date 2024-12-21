@@ -5,14 +5,10 @@ class World {
   camera_x = 0;
   bottleStatusbar = new BottleStatusBar();
   coinStatusBar = new CoinStatusBar();
-  throwableBottles = new Map();
-  bottleCollected = 0;
-  coinsCollected = 0;
   canMoveRight = true;
   gamePaused = false;
   gameWon = false;
   gameLost = false;
-  keyDPressed = false;
   onGameEnd = null;
   gameStateHandled = false;
   lastCheck = 0;
@@ -34,6 +30,7 @@ class World {
     this.loseImage = new Image();
     this.winImage.src = "img/9_intro_outro_screens/win/won_2.png";
     this.loseImage.src = "img/9_intro_outro_screens/game_over/game over.png";
+    this.bottleManager = new BottleManager(this);
     this.setWorld();
   }
 
@@ -89,8 +86,8 @@ class World {
   }
 
   runBottleActions() {
-    this.checkThrowObject();
-    this.checkIfBottleHit();
+    this.bottleManager.checkBottleThrow();
+    this.bottleManager.checkIfBottleHit();
   }
 
   runJumpActions() {
@@ -126,7 +123,7 @@ class World {
     this.addObjectToMap(this.level.clouds);
     this.addToMap(this.character);
     this.addObjectToMap(this.level.enemies);
-    this.addObjectToMap(this.throwableBottles);
+    this.bottleManager.drawBottles();
     this.ctx.translate(-this.camera_x, 0);
   }
 
@@ -191,15 +188,12 @@ class World {
   }
 
   drawWinScreen() {
-    // Hintergrund
     this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Bildgröße auf 50% reduzieren
-    const newWidth = this.winImage.width * 0.5; // 50% der originalen Breite
-    const newHeight = this.winImage.height * 0.5; // 50% der originalen Höhe
+    const newWidth = this.winImage.width * 0.5;
+    const newHeight = this.winImage.height * 0.5;
 
-    // Bild zentrieren mit neuer Größe
     const x = (this.canvas.width - newWidth) / 2;
     const y = (this.canvas.height - newHeight) / 2;
 
@@ -207,15 +201,11 @@ class World {
   }
 
   drawGameOverScreen() {
-    // Hintergrund
     this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Bildgröße auf 50% reduzieren
-    const newWidth = this.loseImage.width * 0.5; // 50% der originalen Breite
-    const newHeight = this.loseImage.height * 0.5; // 50% der originalen Höhe
-
-    // Bild zentrieren mit neuer Größe
+    const newWidth = this.loseImage.width * 0.5;
+    const newHeight = this.loseImage.height * 0.5;
     const x = (this.canvas.width - newWidth) / 2;
     const y = (this.canvas.height - newHeight) / 2;
 
@@ -238,10 +228,10 @@ class World {
   checkCollectedBottles() {
     this.level.collectableBottles.forEach((bottle) => {
       if (this.character.isColliding(bottle)) {
-        this.bottleCollected++;
+        this.bottleManager.bottleCollected++;
         bottle.bottleCollectSound();
         this.deleteBottle(bottle);
-        this.bottleStatusbar.setPercentage(this.bottleCollected * 10);
+        this.bottleStatusbar.setPercentage(this.bottleManager.bottleCollected * 10);
       }
     });
   }
@@ -277,120 +267,6 @@ class World {
       this.level.collectableCoins.splice(index, 1);
       this.draw();
     }
-  }
-
-  checkThrowObject() {
-    if (this.bottleThrowCondition()) {
-      this.bottleCollected--;
-      this.bottleStatusbar.setPercentage(this.bottleCollected * 10);
-      const bottle = new ThrowableBottles(
-        this.character.x + 30,
-        this.character.y + 100
-      );
-      const bottleId = Date.now();
-      this.throwableBottles.set(bottleId, bottle);
-      this.sounds.playAudio("bottle_throw");
-      this.keyDPressed = true;
-      this.character.bottleThrow = true;
-      this.character.toggleBottleThrow();
-    } else if (!this.keyboard.D) {
-      this.keyDPressed = false;
-      this.character.bottleThrow = false;
-    }
-  }
-
-  bottleThrowCondition() {
-    return (
-      this.keyboard.D &&
-      !this.keyDPressed &&
-      this.throwableBottles.size === 0 &&
-      this.bottleCollected > 0
-    );
-  }
-
-  checkIfBottleHit() {
-    for (const [bottleId, bottle] of this.throwableBottles.entries()) {
-      this.checkBottleCollisionWithEnemies(bottle, bottleId);
-      this.checkBottleCollisionWithGround(bottle, bottleId);
-    }
-  }
-
-  checkBottleCollisionWithEnemies(bottle, bottleId) {
-    for (
-      let enemyIndex = this.level.enemies.length - 1;
-      enemyIndex >= 0;
-      enemyIndex--
-    ) {
-      let enemy = this.level.enemies[enemyIndex];
-      if (!bottle.collided && bottle.isColliding(enemy)) {
-        this.handleBottleEnemyCollision(bottle, bottleId, enemy);
-      }
-    }
-  }
-
-  checkBottleCollisionWithGround(bottle, bottleIndex) {
-    if (!bottle.collided && bottle.y > 340) {
-      this.handleBottleCollisionWithGround(bottle, bottleIndex);
-    }
-  }
-
-  handleBottleEnemyCollision(bottle, bottleId, enemy) {
-    this.markBottleAsCollided(bottle, bottleId);
-    this.applyDamageToEnemy(enemy);
-    this.playEnemySound(enemy);
-    this.handleEnemyAfterCollision(enemy);
-  }
-
-  handleEnemyAfterCollision(enemy) {
-    if (enemy instanceof Chicken) {
-      this.deleteChicken(enemy);
-    } else if (enemy instanceof SmallChicken) {
-      this.deleteChicken(enemy);
-    } else if (enemy instanceof Endboss) {
-      this.endbossHpBar.setPercentage(enemy.hp);
-    }
-  }
-
-  handleBottleCollisionWithGround(bottle, bottleIndex) {
-    bottle.collided = true;
-    bottle.stopThrow();
-    bottle.bottleSplashSound();
-    bottle.bottleSplash(() => this.removeBottle(bottleIndex));
-  }
-
-  markBottleAsCollided(bottle, bottleId) {
-    bottle.collided = true;
-    bottle.stopThrow();
-    bottle.bottleSplashSound();
-    bottle.bottleSplash(() => this.removeBottle(bottleId));
-  }
-
-  playEnemySound(enemy) {
-    if (enemy instanceof Chicken) {
-      enemy.deadChickenSound();
-    } else if (enemy instanceof SmallChicken) {
-      enemy.deadSmallChickenSound();
-    } else if (enemy instanceof Endboss && this.endboss.hp > 10) {
-      enemy.endbossHurtSound();
-    }
-  }
-
-  applyDamageToEnemy(enemy) {
-    enemy.bottledamage();
-  }
-
-  removeBottle(bottleId) {
-    this.throwableBottles.delete(bottleId);
-  }
-
-  deleteChicken(enemy) {
-    setTimeout(() => {
-      let index = this.level.enemies.indexOf(enemy);
-      if (index > -1) {
-        this.level.enemies.splice(index, 1);
-        this.draw();
-      }
-    }, 350);
   }
 
   checkWinOrLose() {
@@ -433,6 +309,7 @@ class World {
 
   handleGameOver() {
     this.sounds.pauseAudio("background_music");
+    document.dispatchEvent(new CustomEvent("gameOver"));
     setTimeout(() => {
       this.pauseGame();
       this.sounds.toggleGameSounds(true);

@@ -15,6 +15,9 @@ class GameStateManager {
         this.restorePositions();
         this.world.gamePaused = false;
         this.world.sounds.playAudio('background_music');
+        if (this.world.character.isSleeping) {
+            this.world.sounds.playAudio('snoring');
+        }
     }
 
     saveCurrentPositions() {
@@ -44,7 +47,7 @@ class GameStateManager {
     }
 
     saveBottlePositions() {
-        this.pausedPositions.bottles = Array.from(this.world.throwableBottles.values()).map(bottle => ({
+        this.pausedPositions.bottles = Array.from(this.world.bottleManager.throwableBottles.values()).map(bottle => ({
             x: bottle.x,
             y: bottle.y,
             speedX: bottle.speedX,
@@ -88,7 +91,7 @@ class GameStateManager {
 
     restoreBottlePositions() {
         this.pausedPositions.bottles?.forEach((pos, index) => {
-            const bottles = Array.from(this.world.throwableBottles.values());
+            const bottles = Array.from(this.world.bottleManager.throwableBottles.values());
             if (bottles[index]) {
                 bottles[index].x = pos.x;
                 bottles[index].y = pos.y;

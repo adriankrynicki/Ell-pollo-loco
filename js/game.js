@@ -49,7 +49,14 @@ function initializeWorld() {
     clearTimeout(gameOverTimeout);
   }
 
+  handleGameEndHTMLElements();
+}
+
+function handleGameEndHTMLElements() {
   world.setGameEndCallback((gameState) => {
+    let audioControls = document.getElementById("audio-controls");
+    audioControls.classList.add("d-none");
+    audioControls.classList.remove("audio-controls");
     gameOverTimeout = setTimeout(() => {
       gameContainer.innerHTML = gameOverHTML(gameState);
     }, 4000);
@@ -79,7 +86,6 @@ function finalizeGameStart() {
   toggleSoundButtons(false);
   toggleMusicButtons(false);
 
-  // Mobile Controls für kleine Bildschirme
   if (window.innerWidth < 1000) {
     console.log("Initialisiere Mobile Controls in finalizeGameStart");
 
@@ -95,7 +101,6 @@ function finalizeGameStart() {
   keyboardActive = true;
 }
 
-// Kompakte Control-Funktionen mit automatischem Reset
 const controls = {
   left: () => {
     resetKeyboard();
@@ -325,7 +330,13 @@ function initializePlayGameButton() {
 
 initializeAudioListeners();
 initializeNavigationListeners();
-initializeKeyboardListeners();
+if (keyboardActive) {
+  initializeKeyboardListeners();
+}
 document.addEventListener("DOMContentLoaded", () => {
   initializePlayGameButton();
+});
+document.addEventListener("gameOver", () => {
+  resetKeyboard();
+  keyboardActive = false;
 });
