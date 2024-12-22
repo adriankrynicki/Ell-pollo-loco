@@ -6,6 +6,10 @@ class SmallChicken extends MovableObject {
   isJumping = false;
   isDeathAnimationPlaying = false;
   distanceTraveled = 0;
+  isAnimated = false;
+  walkInterval = null;
+  deathCheckInterval = null;
+
   IMAGES_WALKING = [
     "img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
     "img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
@@ -21,8 +25,46 @@ class SmallChicken extends MovableObject {
     this.x = this.getRandomCoordinates(chickenCount);
     this.speed = 10 + Math.random() * 3;
     this.applayGravity();
+  }
 
-    this.animate();
+  startAnimation() {
+    if (this.walkInterval) {
+      clearInterval(this.walkInterval);
+    }
+    if (this.deathCheckInterval) {
+      clearInterval(this.deathCheckInterval);
+    }
+
+    this.walkInterval = setInterval(() => {
+      if (this.isAnimated && !this.isDeathAnimationPlaying) {
+        if (!this.isJumping && !this.isAboveGround()) {
+          this.playAnimation(this.IMAGES_WALKING);
+          this.randomJump();
+          this.isJumping = false;
+        }
+        this.playAnimation(this.IMAGES_WALKING);
+        this.moveLeft();
+        this.OtherDirection = false;
+      }
+    }, 60);
+
+    this.deathCheckInterval = setInterval(() => {
+      if (this.isDead() && !this.isDeathAnimationPlaying) {
+        clearInterval(this.walkInterval);
+        this.playDeathAnimation();
+      }
+    }, 500);
+  }
+
+  stopAnimation() {
+    if (this.walkInterval) {
+      clearInterval(this.walkInterval);
+      this.walkInterval = null;
+    }
+    if (this.deathCheckInterval) {
+      clearInterval(this.deathCheckInterval);
+      this.deathCheckInterval = null;
+    }
   }
 
   getRandomCoordinates(chickenCount) {
@@ -39,28 +81,6 @@ class SmallChicken extends MovableObject {
     }
 
     return startPosition + Math.random() * 500;
-  }
-
-  animate() {
-    let walkAnimation = setInterval(() => {
-      if (!this.isDeathAnimationPlaying) {
-        if (!this.isJumping && !this.isAboveGround()) {
-          this.playAnimation(this.IMAGES_WALKING);
-          this.randomJump();
-          this.isJumping = false;
-        }
-        this.playAnimation(this.IMAGES_WALKING);
-
-        this.OtherDirection = false;
-      }
-    }, 60);
-
-    setInterval(() => {
-      if (this.isDead() && !this.isDeathAnimationPlaying) {
-        clearInterval(walkAnimation);
-        this.playDeathAnimation();
-      }
-    }, 500);
   }
 
   playDeathAnimation() {

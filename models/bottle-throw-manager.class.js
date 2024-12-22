@@ -1,4 +1,4 @@
-class BottleManager {
+class BottleThrowManager {
     constructor(world) {
         this.world = world;
         this.throwableBottles = new Map();

@@ -30,7 +30,7 @@ class World {
     this.loseImage = new Image();
     this.winImage.src = "img/9_intro_outro_screens/win/won_2.png";
     this.loseImage.src = "img/9_intro_outro_screens/game_over/game over.png";
-    this.bottleManager = new BottleManager(this);
+    this.bottleThrowManager = new BottleThrowManager(this);
     this.setWorld();
   }
 
@@ -72,28 +72,31 @@ class World {
     if (currentTime - this.lastCheck >= this.checkInterval) {
       this.runBasicChecks();
       this.runBottleActions();
-      this.runJumpActions();
+      this.runJumpActions();      
 
       this.lastCheck = currentTime;
     }
   }
 
   runBasicChecks() {
-    this.checkCollisionsWithEnemies();
+    this.collisionHandler.checkCollisionsWithEnemies();
     this.checkCollectedBottles();
     this.checkCollectedCoins();
     this.checkWinOrLose();
   }
 
   runBottleActions() {
-    this.bottleManager.checkBottleThrow();
-    this.bottleManager.checkIfBottleHit();
+    this.bottleThrowManager.checkBottleThrow();
+    this.bottleThrowManager.checkIfBottleHit();
   }
 
   runJumpActions() {
-    this.collisionHandler.handleJumpOnChicken();
-    this.collisionHandler.handleJumpOnSmallChicken();
-    this.collisionHandler.checkCharacterAfterJumpOnAnEnemy();
+    if (this.character.isAboveGround()) {
+      this.collisionHandler.handleJumpOnChicken();
+      this.collisionHandler.handleJumpOnSmallChicken();
+    } else {
+      this.collisionHandler.onAnEnemy = false;
+    }
   }
 
   pauseGame() {
@@ -120,11 +123,62 @@ class World {
   movableObjects() {
     if (!this.level) return;
     this.ctx.translate(this.camera_x, 0);
+    
     this.addObjectToMap(this.level.clouds);
     this.addToMap(this.character);
-    this.addObjectToMap(this.level.enemies);
-    this.bottleManager.drawBottles();
+    
+    this.drawEnemies();
+    
+    this.bottleThrowManager.drawBottles();
     this.ctx.translate(-this.camera_x, 0);
+    
+    this.cleanupEnemies();
+  }
+
+  drawEnemies() {
+    let visibleEnemies = this.getVisibleEnemies();
+    
+    // Aktiviere Animation für sichtbare Feinde
+    visibleEnemies.forEach(enemy => {
+        if (!enemy.isAnimated && (enemy instanceof Chicken || enemy instanceof SmallChicken)) {
+            enemy.isAnimated = true;
+            enemy.startAnimation();
+        }
+    });
+
+    // Deaktiviere Animation für nicht sichtbare Feinde
+    this.level.enemies
+        .filter(enemy => !visibleEnemies.includes(enemy))
+        .forEach(enemy => {
+            if (enemy.isAnimated && (enemy instanceof Chicken || enemy instanceof SmallChicken)) {
+                enemy.isAnimated = false;
+                enemy.stopAnimation();
+            }
+        });
+
+    this.addObjectToMap(visibleEnemies);
+  }
+
+  getVisibleEnemies() {
+    let viewportStart = this.character.x - 200; 
+    let viewportEnd = this.character.x + 300;   
+    
+    return this.level.enemies.filter(enemy => {
+        return enemy.x >= viewportStart && 
+               enemy.x <= viewportEnd || 
+               enemy instanceof Endboss; 
+    });
+  }
+
+  cleanupEnemies() {
+    let removalThreshold = this.character.x - 1000; 
+    this.level.enemies = this.level.enemies.filter(enemy => {
+        if (enemy.x <= removalThreshold && !(enemy instanceof Endboss)) {
+            enemy.stopAnimation(); // Stoppe Animationen bevor das Objekt entfernt wird
+            return false;
+        }
+        return true;
+    });
   }
 
   drawStatusBars() {
@@ -212,26 +266,13 @@ class World {
     this.ctx.drawImage(this.loseImage, x, y, newWidth, newHeight);
   }
 
-  checkCollisionsWithEnemies() {
-    this.collisionHandler.checkCollisionsWithEnemies();
-  }
-
-  checkCharacterAfterJumpOnAnEnemy() {
-    this.collisionHandler.checkCharacterAfterJumpOnAnEnemy();
-  }
-
-  handleJumpOnEnemies() {
-    this.collisionHandler.handleJumpOnChicken();
-    this.collisionHandler.handleJumpOnSmallChicken();
-  }
-
   checkCollectedBottles() {
     this.level.collectableBottles.forEach((bottle) => {
       if (this.character.isColliding(bottle)) {
-        this.bottleManager.bottleCollected++;
+        this.bottleThrowManager.bottleCollected++;
         bottle.bottleCollectSound();
         this.deleteBottle(bottle);
-        this.bottleStatusbar.setPercentage(this.bottleManager.bottleCollected * 10);
+        this.bottleStatusbar.setPercentage(this.bottleThrowManager.bottleCollected * 10);
       }
     });
   }

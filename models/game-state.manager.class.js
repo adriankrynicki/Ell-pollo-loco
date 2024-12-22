@@ -47,7 +47,7 @@ class GameStateManager {
     }
 
     saveBottlePositions() {
-        this.pausedPositions.bottles = Array.from(this.world.bottleManager.throwableBottles.values()).map(bottle => ({
+        this.pausedPositions.bottles = Array.from(this.world.bottleThrowManager.throwableBottles.values()).map(bottle => ({
             x: bottle.x,
             y: bottle.y,
             speedX: bottle.speedX,
@@ -91,7 +91,7 @@ class GameStateManager {
 
     restoreBottlePositions() {
         this.pausedPositions.bottles?.forEach((pos, index) => {
-            const bottles = Array.from(this.world.bottleManager.throwableBottles.values());
+            const bottles = Array.from(this.world.bottleThrowManager.throwableBottles.values());
             if (bottles[index]) {
                 bottles[index].x = pos.x;
                 bottles[index].y = pos.y;

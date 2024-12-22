@@ -108,7 +108,7 @@ class Character extends MovableObject {
     },
     {
       condition: () => this.bottleThrow,
-      state: "dPressed",
+      state: "bottleThrow",
       images: this.IMAGES_WALKING,
       interval: 60,
     },

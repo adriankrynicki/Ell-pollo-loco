@@ -36,12 +36,6 @@ class CollisionHandler {
     return this.world.endbossHpBar;
   }
 
-  checkCharacterAfterJumpOnAnEnemy() {
-    if (!this.character.isAboveGround()) {
-      this.onAnEnemy = false;
-    }
-  }
-
   checkCollisionsWithEnemies() {
     if (this.endboss) {
       this.handleCollisionsWithEndboss(this.endboss);
