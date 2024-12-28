@@ -164,7 +164,7 @@ canvas {
 }
 
 .play-game-button {
-  color: black;
+  color: rgb(255, 255, 255);
   padding-left: 50px;
   padding-right: 50px;
   height: 58px;
@@ -172,8 +172,8 @@ canvas {
   margin-top: 200px;
   background-image: radial-gradient(
     100% 100% at 100% 0,
-    rgb(163, 67, 33) 0,
-    rgb(255, 203, 25) 100%
+    rgb(214, 64, 64) 0,
+    rgb(255, 0, 0) 100%
   );
 }
 

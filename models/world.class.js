@@ -3,6 +3,7 @@ class World {
   ctx;
   keyboard;
   camera_x = 0;
+  enemySpawnPoints = [];
   bottleStatusbar = new BottleStatusBar();
   coinStatusBar = new CoinStatusBar();
   canMoveRight = true;
@@ -12,25 +13,23 @@ class World {
   onGameEnd = null;
   gameStateHandled = false;
   lastCheck = 0;
-  checkInterval = 50; // 50ms zwischen Checks
+  checkInterval = 50;
 
   constructor(canvas, keyboard) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.keyboard = keyboard;
+    this.endboss = null;
+    this.level = null;
     this.sounds = new Sounds(false);
     this.character = new Character(this);
     this.characterHPBar = new CharacterHPBar();
     this.endbossHpBar = new EndbossHpBar();
-    this.endboss = null;
-    this.level = null;
     this.gameStateManager = new GameStateManager(this);
     this.collisionHandler = new CollisionHandler(this);
-    this.winImage = new Image();
-    this.loseImage = new Image();
-    this.winImage.src = "img/9_intro_outro_screens/win/won_2.png";
-    this.loseImage.src = "img/9_intro_outro_screens/game_over/game over.png";
     this.bottleThrowManager = new BottleThrowManager(this);
+    this.screenManager = new ScreenManager(canvas, canvas.getContext("2d"));
+    this.renderManager = new RenderManager(canvas, canvas.getContext("2d"));
     this.setWorld();
   }
 
@@ -40,8 +39,35 @@ class World {
 
   setLevel(level) {
     this.level = level;
-    this.endboss = this.level.enemies.find((e) => e instanceof Endboss);
+    this.initializeEnemySpawnPoints();
+    this.initializeEndboss();
     this.draw();
+  }
+
+  initializeEnemySpawnPoints() {
+    this.enemySpawnPoints = this.level.enemies.map((enemy) => ({
+      type: enemy.constructor.name,
+      x: enemy.x,
+      spawned: false,
+      id: enemy.number,
+    }));
+  }
+
+  initializeEndboss() {
+    let endbossSpawn = this.findEndbossSpawnPoint();
+    if (endbossSpawn) {
+      this.createEndboss(endbossSpawn);
+    }
+  }
+
+  findEndbossSpawnPoint() {
+    return this.enemySpawnPoints.find((spawn) => spawn.type === "Endboss");
+  }
+
+  createEndboss(endbossSpawn) {
+    this.endboss = new Endboss(endbossSpawn.id);
+    endbossSpawn.spawned = true;
+    this.level.enemies = [this.endboss];
   }
 
   draw() {
@@ -51,16 +77,13 @@ class World {
     }
 
     this.allintervals();
+    this.renderManager.clearCanvas();
 
-    this.clearCanvas();
-
-    this.backgroundObjects();
+    this.renderManager.renderBackgroundObjects(this.level, this.camera_x);
     this.movableObjects();
     this.drawStatusBars();
-    this.displayEndbossHpBar();
 
     this.drawEndScreen();
-
     this.gameEndState();
 
     requestAnimationFrame(() => this.draw());
@@ -70,9 +93,10 @@ class World {
     const currentTime = performance.now();
 
     if (currentTime - this.lastCheck >= this.checkInterval) {
+      this.checkEnemySpawns();
       this.runBasicChecks();
       this.runBottleActions();
-      this.runJumpActions();      
+      this.runJumpActions();
 
       this.lastCheck = currentTime;
     }
@@ -99,95 +123,62 @@ class World {
     }
   }
 
-  pauseGame() {
-    this.gameStateManager.pauseGame();
+  checkEnemySpawns() {
+    let spawnDistance = 500;
+    this.enemySpawnPoints.forEach((spawn) => {
+      this.checkAndSpawnEnemy(spawn, spawnDistance);
+    });
   }
 
-  resumeGame() {
-    this.gameStateManager.resumeGame();
+  checkAndSpawnEnemy(spawn, spawnDistance) {
+    if (this.shouldSpawnEnemy(spawn, spawnDistance)) {
+      let enemy = this.createEnemy(spawn);
+      this.addEnemyToGame(enemy, spawn);
+    }
   }
 
-  clearCanvas() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  shouldSpawnEnemy(spawn, spawnDistance) {
+    return (
+      !spawn.spawned &&
+      spawn.x <= this.character.x + spawnDistance &&
+      spawn.type !== "Endboss"
+    );
   }
 
-  backgroundObjects() {
-    if (!this.level) return;
-    this.ctx.translate(this.camera_x, 0);
-    this.addObjectToMap(this.level.backgroundObject);
-    this.addObjectToMap(this.level.collectableBottles);
-    this.addObjectToMap(this.level.collectableCoins);
-    this.ctx.translate(-this.camera_x, 0);
+  createEnemy(spawn) {
+    switch (spawn.type) {
+      case "Chicken":
+        return new Chicken(spawn.id);
+      case "SmallChicken":
+        return new SmallChicken(spawn.id);
+      default:
+        return null;
+    }
+  }
+
+  addEnemyToGame(enemy, spawn) {
+    if (enemy) {
+      this.level.enemies.push(enemy);
+      spawn.spawned = true;
+    }
   }
 
   movableObjects() {
-    if (!this.level) return;
-    this.ctx.translate(this.camera_x, 0);
-    
-    this.addObjectToMap(this.level.clouds);
-    this.addToMap(this.character);
-    
-    this.drawEnemies();
-    
-    this.bottleThrowManager.drawBottles();
-    this.ctx.translate(-this.camera_x, 0);
-    
-    this.cleanupEnemies();
-  }
-
-  drawEnemies() {
-    let visibleEnemies = this.getVisibleEnemies();
-    
-    // Aktiviere Animation für sichtbare Feinde
-    visibleEnemies.forEach(enemy => {
-        if (!enemy.isAnimated && (enemy instanceof Chicken || enemy instanceof SmallChicken)) {
-            enemy.isAnimated = true;
-            enemy.startAnimation();
-        }
-    });
-
-    // Deaktiviere Animation für nicht sichtbare Feinde
-    this.level.enemies
-        .filter(enemy => !visibleEnemies.includes(enemy))
-        .forEach(enemy => {
-            if (enemy.isAnimated && (enemy instanceof Chicken || enemy instanceof SmallChicken)) {
-                enemy.isAnimated = false;
-                enemy.stopAnimation();
-            }
-        });
-
-    this.addObjectToMap(visibleEnemies);
-  }
-
-  getVisibleEnemies() {
-    let viewportStart = this.character.x - 200; 
-    let viewportEnd = this.character.x + 300;   
-    
-    return this.level.enemies.filter(enemy => {
-        return enemy.x >= viewportStart && 
-               enemy.x <= viewportEnd || 
-               enemy instanceof Endboss; 
-    });
-  }
-
-  cleanupEnemies() {
-    let removalThreshold = this.character.x - 1000; 
-    this.level.enemies = this.level.enemies.filter(enemy => {
-        if (enemy.x <= removalThreshold && !(enemy instanceof Endboss)) {
-            enemy.stopAnimation(); // Stoppe Animationen bevor das Objekt entfernt wird
-            return false;
-        }
-        return true;
-    });
+    this.renderManager.renderMovableObjects(
+      this.level,
+      this.character,
+      this.camera_x,
+      this.bottleThrowManager
+    );
   }
 
   drawStatusBars() {
-    this.addToMap(this.characterHPBar);
-    this.addToMap(this.coinStatusBar);
-    this.addToMap(this.bottleStatusbar);
-    if (this.showEndbossHpBar) {
-      this.addToMap(this.endbossHpBar);
-    }
+    this.renderManager.renderStatusBars([
+      this.characterHPBar,
+      this.coinStatusBar,
+      this.bottleStatusbar,
+      ...(this.character.x > 1500 ? [this.endbossHpBar] : []),
+    ]);
   }
 
   displayEndbossHpBar() {
@@ -197,10 +188,8 @@ class World {
   }
 
   drawEndScreen() {
-    if (this.gameWon) {
-      this.drawWinScreen();
-    } else if (this.gameLost) {
-      this.drawGameOverScreen();
+    if (this.gameWon || this.gameLost) {
+      this.screenManager.drawEndScreen(this.gameWon);
     }
   }
 
@@ -211,59 +200,12 @@ class World {
     }
   }
 
-  addObjectToMap(object) {
-    object.forEach((o) => {
-      this.addToMap(o);
-    });
+  pauseGame() {
+    this.gameStateManager.pauseGame();
   }
 
-  addToMap(mo) {
-    if (mo.OtherDirection) {
-      this.flipImage(mo);
-    }
-
-    mo.draw(this.ctx);
-
-    if (mo.OtherDirection) {
-      this.flipImageBack(mo);
-    }
-  }
-
-  flipImage(mo) {
-    this.ctx.save();
-    this.ctx.translate(mo.width, 0);
-    this.ctx.scale(-1, 1);
-    mo.x = mo.x * -1;
-  }
-
-  flipImageBack(mo) {
-    mo.x = mo.x * -1;
-    this.ctx.restore();
-  }
-
-  drawWinScreen() {
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    const newWidth = this.winImage.width * 0.5;
-    const newHeight = this.winImage.height * 0.5;
-
-    const x = (this.canvas.width - newWidth) / 2;
-    const y = (this.canvas.height - newHeight) / 2;
-
-    this.ctx.drawImage(this.winImage, x, y, newWidth, newHeight);
-  }
-
-  drawGameOverScreen() {
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    const newWidth = this.loseImage.width * 0.5;
-    const newHeight = this.loseImage.height * 0.5;
-    const x = (this.canvas.width - newWidth) / 2;
-    const y = (this.canvas.height - newHeight) / 2;
-
-    this.ctx.drawImage(this.loseImage, x, y, newWidth, newHeight);
+  resumeGame() {
+    this.gameStateManager.resumeGame();
   }
 
   checkCollectedBottles() {
@@ -272,7 +214,9 @@ class World {
         this.bottleThrowManager.bottleCollected++;
         bottle.bottleCollectSound();
         this.deleteBottle(bottle);
-        this.bottleStatusbar.setPercentage(this.bottleThrowManager.bottleCollected * 10);
+        this.bottleStatusbar.setPercentage(
+          this.bottleThrowManager.bottleCollected * 10
+        );
       }
     });
   }

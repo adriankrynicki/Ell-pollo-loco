@@ -17,12 +17,11 @@ class SmallChicken extends MovableObject {
   ];
   IMAGE_DEAD = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
 
-  constructor(chickenCount) {
+  constructor(id) {
     super().loadImage("img/3_enemies_chicken/chicken_small/1_walk/1_w.png");
     this.loadImages(this.IMAGES_WALKING);
-    this.number = chickenCount;
-
-    this.x = this.getRandomCoordinates(chickenCount);
+    this.number = id;
+    this.x = this.getCoordinates(id);
     this.speed = 10 + Math.random() * 3;
     this.applayGravity();
   }
@@ -67,11 +66,11 @@ class SmallChicken extends MovableObject {
     }
   }
 
-  getRandomCoordinates(chickenCount) {
+  getCoordinates(id) {
     let coordinates = [
       300, 800, 1300, 1800, 2300, 2800, 3300, 3800, 4300, 4800,
     ];
-    let index = chickenCount - 1;
+    let index = id - 1;
     let startPosition;
 
     if (index >= 0 && index < coordinates.length) {
@@ -80,11 +79,11 @@ class SmallChicken extends MovableObject {
       startPosition = 300;
     }
 
-    return startPosition + Math.random() * 500;
+    return startPosition;
   }
 
   playDeathAnimation() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.isDeathAnimationPlaying = true;
       this.loadImage(this.IMAGE_DEAD);
       setTimeout(() => {

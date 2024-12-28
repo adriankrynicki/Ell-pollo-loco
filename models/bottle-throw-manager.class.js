@@ -29,7 +29,7 @@ class BottleThrowManager {
 
     drawBottles() {
         this.throwableBottles.forEach(bottle => {
-            this.world.addToMap(bottle);
+            this.world.renderManager.addToMap(bottle);
         });
     }
 

@@ -76,11 +76,11 @@ class GameStateManager {
                 e.number === pos.number && 
                 e.constructor.name === pos.type
             );
-            if (enemy) this.restoreEnemyPosition(enemy, pos);
+            if (enemy) this.enemyPosition(enemy, pos);
         });
     }
 
-    restoreEnemyPosition(enemy, pos) {
+    enemyPosition(enemy, pos) {
         if (!enemy) return;
         
         enemy.x = pos.x;

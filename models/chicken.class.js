@@ -14,18 +14,17 @@ class Chicken extends MovableObject {
   ];
   IMAGE_DEAD = "img/3_enemies_chicken/chicken_normal/2_dead/dead.png";
 
-  constructor(chickenCount) {
+  constructor(id) {
     super().loadImage("img/3_enemies_chicken/chicken_normal/1_walk/1_w.png");
     this.loadImages(this.IMAGES_WALKING);
-    this.number = chickenCount;
- 
-    this.x = this.getRandomCoordinates(chickenCount);
+    this.number = id;
+    this.x = this.getCoordinates(id);
     this.speed = 5 + Math.random() * 2;
   }
 
-  getRandomCoordinates(chickenCount) {
-    let coordinates = [300, 500, 800, 1000, 1300, 1600, 1900, 2300, 2500, 2800];
-    let index = chickenCount - 1;
+  getCoordinates(id) {
+    let coordinates = [500, 900, 800, 1000, 1300, 1600, 1900, 2300, 2500, 2800];
+    let index = id - 1;
     let startPosition;
 
     if (index >= 0 && index < coordinates.length) {
