@@ -167,7 +167,9 @@ class CollisionHandler {
 
     setTimeout(() => {
       this.world.canMoveRight = true;
-      this.damageImmune = false;
+      if (!this.world.characterIsDead) {
+        this.damageImmune = false;
+      }
     }, 1000);
   }
 

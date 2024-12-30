@@ -215,7 +215,7 @@ class Character extends MovableObject {
   }
 
   startSleeping() {
-    if (!this.sleepCountdown) this.sleepCountdown = 0;
+    if (!this.sleepCountdown || this.isHurt()) this.sleepCountdown = 0;
     this.sleepCountdown++;
     if (this.sleepCountdown >= 150 && !this.isSleeping) {
       this.isSleeping = true;

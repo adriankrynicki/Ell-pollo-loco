@@ -1,107 +1,132 @@
 class RenderManager {
-    constructor(canvas, ctx) {
-        this.canvas = canvas;
-        this.ctx = ctx;
+  constructor(canvas, ctx, world) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.world = world;
+    this.endbossActivated = false;
+  }
+
+  clearCanvas() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  renderBackgroundObjects(level, camera_x) {
+    if (!level) return;
+    this.ctx.translate(camera_x, 0);
+    this.addObjectToMap(level.backgroundObject);
+    this.addObjectToMap(level.collectableBottles);
+    this.addObjectToMap(level.collectableCoins);
+    this.ctx.translate(-camera_x, 0);
+  }
+
+  renderMovableObjects(level, character, camera_x, bottleThrowManager) {
+    if (!level) return;
+    this.ctx.translate(camera_x, 0);
+
+    this.addObjectToMap(level.clouds);
+    this.addToMap(character);
+    this.drawEnemies(level, character);
+    bottleThrowManager.drawBottles();
+
+    this.ctx.translate(-camera_x, 0);
+  }
+
+  renderStatusBars(bars) {
+    bars.forEach((bar) => this.addToMap(bar));
+  }
+
+  addObjectToMap(objects) {
+    objects.forEach((obj) => this.addToMap(obj));
+  }
+
+  addToMap(mo) {
+    if (mo.OtherDirection) {
+      this.flipImage(mo);
     }
 
-    clearCanvas() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    mo.draw(this.ctx);
+
+    if (mo.OtherDirection) {
+      this.flipImageBack(mo);
     }
+  }
 
-    renderBackgroundObjects(level, camera_x) {
-        if (!level) return;
-        this.ctx.translate(camera_x, 0);
-        this.addObjectToMap(level.backgroundObject);
-        this.addObjectToMap(level.collectableBottles);
-        this.addObjectToMap(level.collectableCoins);
-        this.ctx.translate(-camera_x, 0);
+  flipImage(mo) {
+    this.ctx.save();
+    this.ctx.translate(mo.width, 0);
+    this.ctx.scale(-1, 1);
+    mo.x = mo.x * -1;
+  }
+
+  flipImageBack(mo) {
+    mo.x = mo.x * -1;
+    this.ctx.restore();
+  }
+
+  drawEnemies(level, character) {
+    let viewportStart = character.x - 200;
+    let viewportEnd = character.x + 500;
+    this.handleEnemiesVisibility(level.enemies, character, viewportStart, viewportEnd);
+    this.addObjectToMap(level.enemies.filter(enemy => enemy.isAnimated));
+  }
+
+  handleEnemiesVisibility(enemies, character, viewportStart, viewportEnd) {
+    enemies.forEach((enemy) => {
+      this.updateEnemyVisibility(enemy, character, viewportStart, viewportEnd);
+      this.updateEnemyAnimation(enemy);
+    });
+  }
+
+  updateEnemyVisibility(enemy, character, viewportStart, viewportEnd) {
+    if (enemy instanceof Endboss) {
+      if (character.x >= 1500) {
+        this.endbossActivated = true;
+      }
+      enemy.isAnimated = this.endbossActivated;
+    } else {
+      enemy.isAnimated = this.world.gameLost || (enemy.x >= viewportStart && enemy.x <= viewportEnd);
     }
+  }
 
-    renderMovableObjects(level, character, camera_x, bottleThrowManager) {
-        if (!level) return;
-        this.ctx.translate(camera_x, 0);
-
-        this.addObjectToMap(level.clouds);
-        this.addToMap(character);
-        this.drawEnemies(level, character);
-        bottleThrowManager.drawBottles();
-
-        this.ctx.translate(-camera_x, 0);
+  updateEnemyAnimation(enemy) {
+    if (this.shouldStartAnimation(enemy)) {
+      this.startEnemyAnimation(enemy);
+    } else if (this.shouldStopAnimation(enemy)) {
+      this.stopEnemyAnimation(enemy);
+    } else if (this.shouldHandleGameWon(enemy)) {
+      this.handleGameWonAnimation(enemy);
     }
+  }
 
-    renderStatusBars(bars) {
-        bars.forEach(bar => this.addToMap(bar));
+  shouldStartAnimation(enemy) {
+    return enemy.isAnimated && !enemy.isCurrentlyAnimated && !this.world.gameLost;
+  }
+
+  shouldStopAnimation(enemy) {
+    return (!enemy.isAnimated || this.world.gameLost) && enemy.isCurrentlyAnimated;
+  }
+
+  shouldHandleGameWon(enemy) {
+    return this.world.gameWon && enemy.isCurrentlyAnimated;
+  }
+
+  startEnemyAnimation(enemy) {
+    enemy.startAnimation();
+    enemy.isCurrentlyAnimated = true;
+  }
+
+  stopEnemyAnimation(enemy) {
+    enemy.stopAnimation();
+    enemy.isCurrentlyAnimated = false;
+  }
+
+  handleGameWonAnimation(enemy) {
+    if (enemy instanceof Endboss) {
+      setTimeout(() => {
+        this.stopEnemyAnimation(enemy);
+      }, 1000);
+    } else {
+      this.stopEnemyAnimation(enemy);
     }
-
-    addObjectToMap(objects) {
-        objects.forEach(obj => this.addToMap(obj));
-    }
-
-    addToMap(mo) {
-        if (mo.OtherDirection) {
-            this.flipImage(mo);
-        }
-
-        mo.draw(this.ctx);
-
-        if (mo.OtherDirection) {
-            this.flipImageBack(mo);
-        }
-    }
-
-    flipImage(mo) {
-        this.ctx.save();
-        this.ctx.translate(mo.width, 0);
-        this.ctx.scale(-1, 1);
-        mo.x = mo.x * -1;
-    }
-
-    flipImageBack(mo) {
-        mo.x = mo.x * -1;
-        this.ctx.restore();
-    }
-
-    drawEnemies(level, character) {
-        let visibleEnemies = this.getVisibleEnemies(level.enemies, character);
-        this.handleEnemiesVisibility(level.enemies, visibleEnemies);
-        this.addObjectToMap(visibleEnemies);
-    }
-
-    getVisibleEnemies(enemies, character) {
-        let viewportStart = character.x - 200;
-        let viewportEnd = character.x + 500;
-
-        return enemies.filter((enemy) => {
-            return (
-                (enemy.x >= viewportStart && enemy.x <= viewportEnd) ||
-                enemy instanceof Endboss
-            );
-        });
-    }
-
-    handleEnemiesVisibility(allEnemies, visibleEnemies) {
-        allEnemies.forEach((enemy) => {
-            const isVisible = visibleEnemies.includes(enemy);
-
-            if (isVisible && this.shouldStartAnimation(enemy)) {
-                enemy.isAnimated = true;
-                enemy.startAnimation();
-            } else if (!isVisible && this.shouldStopAnimation(enemy)) {
-                enemy.isAnimated = false;
-                enemy.stopAnimation();
-            }
-        });
-    }
-
-    shouldStartAnimation(enemy) {
-        return !enemy.isAnimated && this.isAnimatableEnemy(enemy);
-    }
-
-    shouldStopAnimation(enemy) {
-        return enemy.isAnimated && this.isAnimatableEnemy(enemy);
-    }
-
-    isAnimatableEnemy(enemy) {
-        return enemy instanceof Chicken || enemy instanceof SmallChicken;
-    }
+  }
 }

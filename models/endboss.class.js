@@ -4,7 +4,7 @@ class Endboss extends MovableObject {
   y = 60;
   acceleration = 10;
   speed = 80;
-  isAttacking = false; 
+  isAttacking = false;
   IMAGES_WALKING = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
     "img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -42,7 +42,7 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
-  constructor(number) {
+  constructor(number, isAnimated) {
     super().loadImage(this.IMAGES_ALERT[0]);
     this.loadImages(this.IMAGES_ALERT);
     this.loadImages(this.IMAGES_WALKING);
@@ -50,14 +50,19 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_DEAD);
     this.loadImages(this.IMAGES_ATTACK);
     this.applayGravity();
-
+    this.isAnimated = isAnimated;
+    this.animationInterval = null;
+    
     this.number = number;
     this.x = 2000;
-    this.EndbossAnimation();
   }
 
-  EndbossAnimation() {
-    setInterval(() => {
+  startAnimation() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+    }
+
+    this.animationInterval = setInterval(() => {
       if (this.isDead()) {
         this.deadAnimation();
       } else if (this.isEndbossHurt()) {
@@ -70,6 +75,13 @@ class Endboss extends MovableObject {
         this.playAnimation(this.IMAGES_ALERT);
       }
     }, 200);
+  }
+
+  stopAnimation() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = null;
+    }
   }
 
   attackAnimation() {
@@ -89,7 +101,7 @@ class Endboss extends MovableObject {
     this.distanceTraveled += this.speed;
     if (this.distanceTraveled >= 100) {
       this.isAttacking = true;
-      this.distanceTraveled = 0; 
+      this.distanceTraveled = 0;
     }
   }
 

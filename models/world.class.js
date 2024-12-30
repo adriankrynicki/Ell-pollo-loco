@@ -14,6 +14,7 @@ class World {
   gameStateHandled = false;
   lastCheck = 0;
   checkInterval = 50;
+  endbossBarActivated = false;
 
   constructor(canvas, keyboard) {
     this.canvas = canvas;
@@ -29,7 +30,11 @@ class World {
     this.collisionHandler = new CollisionHandler(this);
     this.bottleThrowManager = new BottleThrowManager(this);
     this.screenManager = new ScreenManager(canvas, canvas.getContext("2d"));
-    this.renderManager = new RenderManager(canvas, canvas.getContext("2d"));
+    this.renderManager = new RenderManager(
+      canvas,
+      canvas.getContext("2d"),
+      this
+    );
     this.setWorld();
   }
 
@@ -173,24 +178,22 @@ class World {
   }
 
   drawStatusBars() {
+    if (this.character.x > 1500) {
+      this.endbossBarActivated = true;
+    }
+
     this.renderManager.renderStatusBars([
       this.characterHPBar,
       this.coinStatusBar,
       this.bottleStatusbar,
-      ...(this.character.x > 1500 ? [this.endbossHpBar] : []),
+      ...(this.endbossBarActivated ? [this.endbossHpBar] : []),
     ]);
-  }
-
-  displayEndbossHpBar() {
-    if (this.character.x > 1600) {
-      this.showEndbossHpBar = true;
-    }
   }
 
   drawEndScreen() {
     if (this.gameWon || this.gameLost) {
       this.screenManager.drawEndScreen(this.gameWon);
-    }
+    } 
   }
 
   gameEndState() {
@@ -256,13 +259,15 @@ class World {
 
   checkWinOrLose() {
     if (this.character.hp <= 0 && !this.characterIsDead) {
-      this.handleWinSound();
-    } else if (this.endboss.hp <= 0 && !this.endbossIsDead) {
       this.handleLoseSound();
+      this.collisionHandler.damageImmune = true;
+    } else if (this.endboss.hp <= 0 && !this.endbossIsDead) {
+      this.handleWinSound();
+      this.endboss.isAnimated = false;
     }
   }
 
-  handleWinSound() {
+  handleLoseSound() {
     this.gameLost = true;
     this.characterIsDead = true;
     this.handleGameOver();
@@ -277,7 +282,7 @@ class World {
     );
   }
 
-  handleLoseSound() {
+  handleWinSound() {
     this.gameWon = true;
     this.endbossIsDead = true;
     this.handleGameOver();
