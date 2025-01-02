@@ -13,11 +13,18 @@ class DrawableObject {
     }
 
     loadImages(arr) {
-        arr.forEach(path => {
-            let img = new Image();
-            img.src = path;
-            this.imageCach[path] = img;
-        });
+        return Promise.all(arr.map(path => {
+            return new Promise((resolve) => {
+                if (this.imageCach[path]) {
+                    resolve();
+                    return;
+                }
+                let img = new Image();
+                img.onload = () => resolve();
+                img.src = path;
+                this.imageCach[path] = img;
+            });
+        }));
     }
 
     draw(ctx) {

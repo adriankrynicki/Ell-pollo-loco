@@ -27,5 +27,14 @@ class CollectableBottles extends DrawableObject {
   bottleCollectSound() {
     world.sounds.playAudio("bottle_collect");
   }
+
+  getHitbox() {
+    return {
+      x: this.x + this.width * 0.25,  // 25% vom Rand
+      y: this.y + this.height * 0.25,
+      width: this.width * 0.5,   // 50% der Originalbreite
+      height: this.height * 0.5
+    };
+  }
   }
   

@@ -118,6 +118,7 @@ class CollisionHandler {
       this.character.hit();
       this.character.Endbosskick();
       this.character.characterHurtSound();
+      this.characterHPBar.setPercentage(this.character.hp);
       setTimeout(() => {
         this.world.canMoveRight = true;
       }, 1000);
