@@ -22,6 +22,7 @@ class Sounds {
       small_chicken: new Audio("audio/small_chicken.mp3"),
       walk: new Audio("audio/walk.mp3"),
       snoring: new Audio("audio/snoring.mp3"),
+      hp_restored: new Audio("audio/hp_restored.mp3"),
       win: new Audio("audio/win.mp3"),
       lose: new Audio("audio/game_over.mp3"),
     };

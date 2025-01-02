@@ -12,6 +12,7 @@ class World {
   gameLost = false;
   onGameEnd = null;
   gameStateHandled = false;
+  coinsCollected = 0;
   lastCheck = 0;
   checkInterval = 50;
   endbossBarActivated = false;
@@ -102,7 +103,6 @@ class World {
       this.runBasicChecks();
       this.runBottleActions();
       this.runJumpActions();
-
       this.lastCheck = currentTime;
     }
   }
@@ -129,7 +129,7 @@ class World {
   }
 
   checkEnemySpawns() {
-    let spawnDistance = 500;
+    let spawnDistance = 720;
     this.enemySpawnPoints.forEach((spawn) => {
       this.checkAndSpawnEnemy(spawn, spawnDistance);
     });
@@ -178,7 +178,7 @@ class World {
   }
 
   drawStatusBars() {
-    if (this.character.x > 1500) {
+    if (this.character.x > 5000) {
       this.endbossBarActivated = true;
     }
 
@@ -199,7 +199,12 @@ class World {
   gameEndState() {
     if (!this.gameStateHandled && (this.gameWon || this.gameLost)) {
       this.gameStateHandled = true;
-      this.onGameEnd?.(this.gameWon ? "won" : "lost");
+      if (this.onGameEnd) {
+        this.onGameEnd({
+          won: this.gameWon,
+          finalTime: document.getElementById("time-container").innerHTML
+        });
+      }
     }
   }
 
@@ -234,6 +239,7 @@ class World {
       } else if (this.coinsCollected >= 20) {
         this.character.hp++;
         this.characterHPBar.setPercentage(this.character.hp);
+        this.sounds.playAudio("hp_restored");
         if (this.character.hp >= 100 && this.coinsCollected >= 20) {
           this.coinsCollected = 0;
         }
@@ -275,11 +281,13 @@ class World {
     setTimeout(() => {
       this.sounds.playAudio("lose");
     }, 1000);
-    document.dispatchEvent(
-      new CustomEvent("gameStateChange", {
-        detail: { state: "lost" },
-      })
-    );
+    
+    if (this.onGameEnd) {
+      this.onGameEnd({
+        won: false,
+        finalTime: document.getElementById("time-container").innerHTML
+      });
+    }
   }
 
   handleWinSound() {
@@ -290,11 +298,13 @@ class World {
     setTimeout(() => {
       this.sounds.playAudio("win");
     }, 800);
-    document.dispatchEvent(
-      new CustomEvent("gameStateChange", {
-        detail: { state: "won" },
-      })
-    );
+    
+    if (this.onGameEnd) {
+      this.onGameEnd({
+        won: true,
+        finalTime: document.getElementById("time-container").innerHTML
+      });
+    }
   }
 
   handleGameOver() {

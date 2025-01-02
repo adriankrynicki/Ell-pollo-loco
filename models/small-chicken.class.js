@@ -68,7 +68,7 @@ class SmallChicken extends MovableObject {
 
   getCoordinates(id) {
     let coordinates = [
-      300, 800, 1300, 1800, 2300, 2800, 3300, 3800, 4300, 4800,
+      1400, 2100, 2300, 2500, 3000, 3300, 3600, 3900, 4100, 4300, 4400, 4500, 4700, 4900, 5000
     ];
     let index = id - 1;
     let startPosition;
@@ -100,6 +100,15 @@ class SmallChicken extends MovableObject {
       this.speedY = -25;
       this.distanceTraveled = 0;
     }
+  }
+
+  getHitbox() {
+    return {
+      x: this.x + this.width * 0.15,  // 15% vom Rand
+      y: this.y + this.height * 0.1,
+      width: this.width * 0.7,   // 70% der Originalbreite
+      height: this.height * 0.8
+    };
   }
 
   deadSmallChickenSound() {
