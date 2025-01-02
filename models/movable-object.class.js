@@ -72,39 +72,65 @@ class MovableObject extends DrawableObject {
     this.currentImage++;
   }
 
+  getHitbox() {
+    return {
+      x: this.x + this.width * 0.1,
+      y: this.y + this.height * 0.1,
+      width: this.width * 0.8,
+      height: this.height * 0.8
+    };
+  }
+
   isColliding(mo) {
+    let hitboxA = this.getHitbox();
+    let hitboxB = mo.getHitbox();
+
     return (
-      this.x + 10 + this.width - 20 > mo.x + 10 &&
-      this.y + 10 + this.height - 20 > mo.y + 10 &&
-      this.x + 10 < mo.x + 10 + mo.width - 20 &&
-      this.y + 10 < mo.y + 10 + mo.height - 20
+      hitboxA.x < hitboxB.x + hitboxB.width &&
+      hitboxA.x + hitboxA.width > hitboxB.x &&
+      hitboxA.y < hitboxB.y + hitboxB.height &&
+      hitboxA.y + hitboxA.height > hitboxB.y
     );
   }
 
   isCollidingWithEndbossAboveGround(mo) {
+    let characterHitbox = this.getHitbox();
+    let endbossHitbox = mo.getHitbox();
+    
     return (
-      this.x - 30 + this.width > mo.x &&
-      this.y + this.height > mo.y &&
-      this.x < mo.x + mo.width &&
-      this.y < mo.y + mo.height
+      characterHitbox.x < endbossHitbox.x + endbossHitbox.width * 0.8 &&
+      characterHitbox.x + characterHitbox.width > endbossHitbox.x + endbossHitbox.width * 0.2 &&
+      characterHitbox.y + characterHitbox.height > endbossHitbox.y &&
+      characterHitbox.y < endbossHitbox.y + endbossHitbox.height * 0.3
     );
   }
 
   isCollidingWithEndbossOnGround(mo) {
+    let characterHitbox = this.getHitbox();
+    let endbossHitbox = mo.getHitbox();
+    
     return (
-      this.x - 60 + this.width > mo.x &&
-      this.y + this.height > mo.y &&
-      this.x < mo.x + mo.width &&
-      this.y < mo.y + mo.height
+      characterHitbox.x < endbossHitbox.x + endbossHitbox.width * 0.9 &&
+      characterHitbox.x + characterHitbox.width > endbossHitbox.x + endbossHitbox.width * 0.1 &&
+      characterHitbox.y + characterHitbox.height > endbossHitbox.y + endbossHitbox.height * 0.5
     );
   }
 
   isCollected(mo) {
+    let collectionHitbox = {
+      x: this.x + this.width * 0.3,
+      y: this.y + this.height * 0.3,
+      width: this.width * 0.4,
+      height: this.height * 0.4
+    };
+
+    let itemHitbox = mo.getHitbox();
+
     return (
-      this.x + 20 + this.width - 40 > mo.x + 10 &&
-      this.y + 110 + this.height - 125 > mo.y + 10 &&
-      this.x + 20 < mo.x + 10 + mo.width - 20 &&
-      this.y + 110 < mo.y + 10 + mo.height - 20
+      collectionHitbox.x < itemHitbox.x + itemHitbox.width &&
+      collectionHitbox.x + collectionHitbox.width > itemHitbox.x &&
+      collectionHitbox.y < itemHitbox.y + itemHitbox.height &&
+      collectionHitbox.y + collectionHitbox.height > itemHitbox.y
     );
   }
 
@@ -120,7 +146,7 @@ class MovableObject extends DrawableObject {
   isEndbossHurt() {
     let timePassd = new Date().getTime() - this.lastEndbossHit;
     timePassd = timePassd / 1000;
-    return timePassd < 1.5;
+    return timePassd < 0.3;
   }
 
   hit() {
