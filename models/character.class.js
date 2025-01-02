@@ -3,13 +3,15 @@ class Character extends MovableObject {
   y = 160;
   width = 135;
   height = 270;
-  speed = 15;
+  speed = 7;
   world;
   isSleeping = false;
   userIsPlaying = false;
   sleepCountdown = 0;
   bottleThrow = false;
   bottleThrowTimer = 0;
+  lastAnimationUpdate = 0;
+  lastStateUpdate = 0;
 
   IMAGES_WALKING = [
     "img/2_character_pepe/2_walk/W-21.png",
@@ -128,16 +130,25 @@ class Character extends MovableObject {
 
   constructor() {
     super().loadImage("img/2_character_pepe/1_idle/idle/I-1.png");
-    this.loadImages(this.IMAGES_IDLE);
-    this.loadImages(this.IMAGES_SLEEP);
-    this.loadImages(this.IMAGES_WALKING);
-    this.loadImages(this.IMAGES_JUMPING);
-    this.loadImages(this.IMAGES_JUMPING_SHORT);
-    this.loadImages(this.IMAGES_DEAD);
-    this.loadImages(this.IMAGES_HURT);
+    this.characterImages();
     this.applayGravity();
 
     this.animate();
+  }
+
+  characterImages() {
+    let characterImages = [
+      this.IMAGES_WALKING,
+      this.IMAGES_JUMPING,
+      this.IMAGES_JUMPING_SHORT,
+      this.IMAGES_DEAD,
+      this.IMAGES_HURT,
+      this.IMAGES_IDLE,
+      this.IMAGES_SLEEP,
+    ];
+    characterImages.forEach((images) => {
+      this.loadImages(images);
+    });
   }
 
   animate() {
@@ -146,16 +157,27 @@ class Character extends MovableObject {
       return;
     }
 
-    setInterval(() => {
-      this.handleWalkingRight();
-      this.handleWalkingLeft();
-      this.handleJumpingAnimation();
-      this.handleUserInput();
-      this.updateCameraPosition();
-      this.toggleBottleThrow();
-      this.checkWalkSound();
-    }, 60);
+    this.handleMovement();
+    
+    if (!this.lastAnimationUpdate || performance.now() - this.lastAnimationUpdate >= 50) {
+      this.handleAnimations();
+      this.lastAnimationUpdate = performance.now();
+    }
 
+    requestAnimationFrame(() => this.animate());
+  }
+
+  handleMovement() {
+    this.handleWalkingRight();
+    this.handleWalkingLeft();
+    this.handleUserInput();
+    this.updateCameraPosition();
+  }
+
+  handleAnimations() {
+    this.handleJumpingAnimation();
+    this.toggleBottleThrow();
+    this.checkWalkSound();
     this.handleAnimationStates();
   }
 
@@ -189,7 +211,8 @@ class Character extends MovableObject {
       this.world.keyboard.RIGHT ||
       this.world.keyboard.LEFT ||
       this.world.keyboard.UP ||
-      this.world.keyboard.D
+      this.world.keyboard.D ||
+      this.isHurt()
     ) {
       this.userIsPlaying = true;
       this.isSleeping = false;
@@ -215,9 +238,9 @@ class Character extends MovableObject {
   }
 
   startSleeping() {
-    if (!this.sleepCountdown || this.isHurt()) this.sleepCountdown = 0;
+    if (!this.sleepCountdown) this.sleepCountdown = 0;
     this.sleepCountdown++;
-    if (this.sleepCountdown >= 150 && !this.isSleeping) {
+    if (this.sleepCountdown >= 300 && !this.isSleeping) {
       this.isSleeping = true;
       this.world.sounds.playAudio("snoring");
     }
@@ -236,25 +259,16 @@ class Character extends MovableObject {
   }
 
   handleAnimationStates() {
-    const updateAnimation = () => {
-      if (!this.world) {
-        requestAnimationFrame(updateAnimation);
-        return;
-      }
-
-      const animation = this.animations.find((a) => a.condition()) || {
+    const currentTime = performance.now();
+    const animation = this.animations.find((a) => a.condition()) || {
         images: this.IMAGES_IDLE,
         interval: 220,
-      };
-
-      this.playAnimation(animation.images);
-      setTimeout(
-        () => requestAnimationFrame(updateAnimation),
-        animation.interval
-      );
     };
 
-    updateAnimation();
+    if (!this.lastStateUpdate || currentTime - this.lastStateUpdate >= animation.interval) {
+        this.playAnimation(animation.images);
+        this.lastStateUpdate = currentTime;
+    }
   }
 
   canMoveRight() {
