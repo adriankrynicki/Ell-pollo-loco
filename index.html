@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <link
+      rel="preload"
+      href="fonts/caprasimo/caprasimo-v5-latin-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="fonts/caprasimo/caprasimo.css" />
+    <link
+      rel="preload"
+      href="fonts/dm-serif-text/dm-serif-text-v12-latin-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="fonts/dm-serif-text/dm-serif-text.css" />
+    <link
       rel="shortcut icon"
       href="img/6_salsa_bottle/salsa_bottle.png"
       type="image/x-icon"
@@ -25,18 +41,24 @@
             Credits
           </button>
         </div>
+        <span class="d-none" id="time-container">
+          <p>Time: 00:00</p>
+        </span>
         <div id="audio-controls" class="d-none">
-          <button class="button-style audio-button" id="play">Music ON</button>
-          <button class="d-none" id="pause">Music OFF</button>
-          <button class="button-style audio-button" id="soundOn">
+          <button class="button-style audio-button" id="music-on">
+            Music ON
+          </button>
+          <button class="d-none" id="music-off">Music OFF</button>
+          <button class="button-style audio-button" id="sound-on">
             Sounds ON
           </button>
-          <button class="d-none" id="soundOff">Sounds OFF</button>
-          <button class="button-style audio-button" id="menu">Pause</button>
+          <button class="d-none" id="sound-off">Sounds OFF</button>
+          <button class="button-style pause-button" id="pause-game">
+            Pause
+          </button>
         </div>
       </div>
-      <div id="game-container" class="game-container">
-      </div>
+      <div id="game-container" class="game-container"></div>
       <canvas class="d-none" id="canvas" width="720" height="480"> </canvas>
       <div id="loadingText" class="d-none">
         <span>L</span>
