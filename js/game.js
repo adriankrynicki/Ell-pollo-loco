@@ -2,17 +2,20 @@ let canvas;
 let world;
 let keyboardActive = true;
 let keyboard = new Keyboard();
-let musicOff = document.getElementById("pause");
-let musicON = document.getElementById("play");
-let soundOn = document.getElementById("soundOn");
-let soundOff = document.getElementById("soundOff");
+let musicOff = document.getElementById("music-off");
+let musicON = document.getElementById("music-on");
+let soundOn = document.getElementById("sound-on");
+let soundOff = document.getElementById("sound-off");
 let playGameButton = document.getElementById("playGameButton");
 let gameContainer = document.getElementById("game-container");
 let controlsContainer = document.getElementById("controls-container");
-let menuButton = document.getElementById("menu");
+let pauseButton = document.getElementById("pause-game");
 let soundsOn = false;
 let musicOn = false;
 let gameOverTimeout;
+let timerInterval;
+let currentFormattedTime = "0:00:00";
+let finalGameTime = "0:00:00";
 
 async function playGame() {
   prepareUIForGameStart();
@@ -21,9 +24,75 @@ async function playGame() {
   try {
     await loadGameResources();
     finalizeGameStart();
+    startTimer();
   } catch (error) {
     console.error("Error loading game resources:", error);
   }
+}
+
+function startTimer() {
+  resetTimerIfExists();
+  initializeTimerVariables();
+  startTimerLoop();
+}
+
+function resetTimerIfExists() {
+  if (timerInterval) {
+    cancelAnimationFrame(timerInterval);
+  }
+}
+
+function initializeTimerVariables() {
+  window.gameTime = {
+    total: 0,
+    lastUpdate: 0,
+    container: document.getElementById("time-container"),
+  };
+}
+
+function startTimerLoop() {
+  timerInterval = requestAnimationFrame(updateTimer);
+}
+
+function updateTimer(timestamp) {
+  if (!world.gamePaused) {
+    updateTimeIfNeeded(timestamp);
+  }
+  timerInterval = requestAnimationFrame(updateTimer);
+}
+
+function updateTimeIfNeeded(timestamp) {
+  if (timestamp - gameTime.lastUpdate >= 100) {
+    gameTime.total++;
+    updateTimeDisplay();
+    gameTime.lastUpdate = timestamp;
+  }
+}
+
+function updateTimeDisplay() {
+  const formattedTime = formatTime(gameTime.total);
+  if (gameTime.container.innerHTML !== formattedTime) {
+    gameTime.container.innerHTML = formattedTime;
+    finalGameTime = formattedTime;
+  }
+}
+
+function formatTime(time) {
+  const minutes = Math.floor(time / 600);
+  const seconds = Math.floor((time % 600) / 10);
+  const tenths = (time % 10) * 10;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}:${tenths
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    cancelAnimationFrame(timerInterval);
+    timerInterval = undefined;
+  }
+  return finalGameTime;
 }
 
 function prepareUIForGameStart() {
@@ -37,6 +106,7 @@ function prepareUIForGameStart() {
   let loadingText = document.getElementById("loadingText");
   loadingText.classList.remove("d-none");
   loadingText.classList.add("loading-text");
+  gameContainer.classList.remove("game-container");
 
   gameContainer.innerHTML = "";
 }
@@ -54,9 +124,21 @@ function initializeWorld() {
 
 function handleGameEndHTMLElements() {
   world.setGameEndCallback((gameState) => {
+    if (!gameState) gameState = {};
+
     let audioControls = document.getElementById("audio-controls");
     audioControls.classList.add("d-none");
     audioControls.classList.remove("audio-controls");
+
+    let timeContainer = document.getElementById("time-container");
+
+    timeContainer.classList.add("d-none");
+    timeContainer.classList.remove("time-container");
+
+    stopTimer();
+
+    console.log("Game Over State:", gameState);
+
     gameOverTimeout = setTimeout(() => {
       gameContainer.innerHTML = gameOverHTML(gameState);
     }, 4000);
@@ -79,6 +161,10 @@ function finalizeGameStart() {
   let loadingText = document.getElementById("loadingText");
   loadingText.classList.add("d-none");
   loadingText.classList.remove("loading-text");
+
+  let timeContainer = document.getElementById("time-container");
+  timeContainer.classList.remove("d-none");
+  timeContainer.classList.add("time-container");
 
   let audioControls = document.getElementById("audio-controls");
   audioControls.classList.remove("d-none");
@@ -122,8 +208,8 @@ const controls = {
 
 function updateGameContainer(section) {
   let contentMap = {
-    info: controlsHTML,
-    credits: creditsHTML,
+    info: controlsButtonsHTML,
+    credits: creditsButtonsHTML,
     play: playGameButtonHTML,
   };
 
@@ -196,14 +282,12 @@ function openInGameMenu() {
   keyboardActive = false;
   world.pauseGame();
 
-  // Speichere den aktuellen Zustand der Musik und Sounds
   soundsOn = !soundOff.classList.contains("d-none");
   musicOn = !musicOff.classList.contains("d-none");
 
-  // Pause Sounds und Musik
   if (world && world.sounds) {
-    world.sounds.toggleGameSounds(true); // Mute game sounds
-    world.sounds.toggleMusic(true); // Pause background music
+    world.sounds.toggleGameSounds(true);
+    world.sounds.toggleMusic(true);
   }
 
   gameContainer.innerHTML = inGameMenuHTML();
@@ -229,6 +313,8 @@ function updateUIElements(uiElements) {
   uiElements.audio.classList.remove("audio-controls");
   uiElements.audio.classList.add("d-none");
   uiElements.main.classList.add("start-screen");
+  uiElements.time.classList.add("d-none");
+  uiElements.time.classList.remove("time-container");
 }
 
 function backToMenu() {
@@ -236,6 +322,7 @@ function backToMenu() {
     main: document.getElementsByTagName("main")[0],
     nav: document.getElementById("nav-controls"),
     audio: document.getElementById("audio-controls"),
+    time: document.getElementById("time-container"),
   };
   gameContainer.innerHTML = "";
 
@@ -244,10 +331,12 @@ function backToMenu() {
   }
   if (gameOverTimeout) {
     clearTimeout(gameOverTimeout);
+    stopTimer();
     gameOverTimeout = null;
   }
 
   updateUIElements(uiElements);
+  gameContainer.classList.add("game-container");
   gameContainer.innerHTML = playGameButtonHTML();
 }
 
@@ -260,9 +349,11 @@ function resetKeyboard() {
 
 function restartGame() {
   let audioControls = document.getElementById("audio-controls");
+  let timeContainer = document.getElementById("time-container");
   gameContainer.innerHTML = "";
   if (gameOverTimeout) {
     clearTimeout(gameOverTimeout);
+    stopTimer();
     gameOverTimeout = null;
   }
 
@@ -270,6 +361,8 @@ function restartGame() {
 
   audioControls.classList.add("d-none");
   audioControls.classList.remove("audio-controls");
+  timeContainer.classList.add("d-none");
+  timeContainer.classList.remove("time-container");
   canvas.classList.add("d-none");
 }
 
@@ -278,11 +371,14 @@ function initializeAudioListeners() {
   soundOff.addEventListener("click", handleSoundToggle);
   musicON.addEventListener("click", handleMusicToggle);
   musicOff.addEventListener("click", handleMusicToggle);
-  menuButton.addEventListener("click", openInGameMenu);
+  pauseButton.addEventListener("click", openInGameMenu);
 }
 
 const sectionHandlers = {
-  info: () => updateGameContainer("info"),
+  info: () => {
+    updateGameContainer("info");
+    showControls();
+  },
   play: () => updateGameContainer("play"),
   credits: () => {
     updateGameContainer("credits");
@@ -291,6 +387,16 @@ const sectionHandlers = {
   legalNotice: () => updateCreditsContainer("legalNotice"),
   privacyPolicy: () => updateCreditsContainer("privacyPolicy"),
 };
+
+function showControls() {
+  let infoContent = document.getElementById('info-content');
+  infoContent.innerHTML = controlsHTML();
+}
+
+function showGameMechanics() {
+  let infoContent = document.getElementById('info-content');
+  infoContent.innerHTML = gameMechanicsHTML();
+}
 
 function initializeNavigationListeners() {
   document.addEventListener("click", (e) => {
@@ -340,3 +446,4 @@ document.addEventListener("gameOver", () => {
   resetKeyboard();
   keyboardActive = false;
 });
+

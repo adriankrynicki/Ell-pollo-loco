@@ -1,0 +1,9 @@
+/* caprasimo-regular - latin */
+@font-face {
+  font-display: swap;
+  font-family: 'Caprasimo';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./caprasimo-v5-latin-regular.woff2') format('woff2'); /* Pfad angepasst */
+}
+    
