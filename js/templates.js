@@ -1,43 +1,110 @@
+function controlsButtonsHTML() { return /*html*/ `
+  <div class="info-container">
+    <div class="controls-nav">
+      <button class="button-style credits-button" onclick="showControls()">
+      Pepe Controls
+      </button>
+      <button
+        class="button-style credits-button"
+        onclick="showGameMechanics()"
+      >
+        How to Play
+      </button>
+    </div>
+    <div id="info-content" class="info-content"></div>
+  </div>
+  `; 
+}
+
 function controlsHTML() {
   return /*html*/ `
-  <div class="info-container">
-    <h1>Controls</h1>
-    <div class="controls-container">
-      <div class="arrow-keys-container">
-        <p>Use the arrow keys to move the character.</p>
-        <div class="arrow-keys-content">
-          <div class="up-key-container">
-            <div class="arrow-key-border">
-              <img class="arrow-key" src="img/arrow_up.png" alt="up" />
-            </div>
-            <p>Jump</p>
+  <div id="controls-content" class="controls-content">
+  <h1>Pepe Controls</h1>
+  <div class="controls-container">
+    <div class="arrow-keys-container">
+      <p>Use the arrow keys to move Pepe.</p>
+      <div class="arrow-keys-content">
+        <div class="up-key-container">
+          <div class="arrow-key-border">
+            <img class="arrow-key" src="img/arrow_up.png" alt="up" />
           </div>
-          <div class="left-right-key-container">
-            <div class="left-key-container">
-              <div class="arrow-key-border">
-                <img class="arrow-key" src="img/arrow_left.png" alt="up" />
-              </div>
-              <p>Move Left</p>
-            </div>
-            <div class="right-key-container">
-              <div class="arrow-key-border">
-                <img class="arrow-key" src="img/arrow_right.png" alt="up" />
-              </div>
-              <p>Move Right</p>
-            </div>
-          </div>
+          <p>Jump</p>
         </div>
-      </div>
-      <div class="throw-bottle-container">
-        <p>Press "D" to throw a bottle.</p>
-        <div class="d-key-border">
-          <p>D</p>
+        <div class="left-right-key-container">
+          <div class="left-key-container">
+            <div class="arrow-key-border">
+              <img class="arrow-key" src="img/arrow_left.png" alt="up" />
+            </div>
+            <p>Move Left</p>
+          </div>
+          <div class="right-key-container">
+            <div class="arrow-key-border">
+              <img class="arrow-key" src="img/arrow_right.png" alt="up" />
+            </div>
+            <p>Move Right</p>
+          </div>
         </div>
       </div>
     </div>
+    <div class="throw-bottle-container">
+      <p>Press "D" to throw a bottle.</p>
+      <div class="d-key-border">
+        <p>D</p>
+      </div>
+    </div>
   </div>
-`;
+</div>
+  `;
 }
+
+function gameMechanicsHTML() { 
+  return /*html*/ `
+  <div class="tab-content" id="howtoplay">
+    <h2>How to Play</h2>
+    <div class="game-mechanics"> 
+      <p class="mechanic-text">
+        Collect
+        <img
+          class="icon-bottle"
+          src="img/6_salsa_bottle/salsa_bottle.png"
+          alt="Bottle"
+        />
+        to throw them at enemies.
+      </p>
+      <p class="mechanic-text">
+        Keep an eye on your
+        <img
+          class="icon-bar"
+          src="img/7_statusbars/1_statusbar/2_statusbar_health/green/60.png"
+          alt="Health Bar"
+        />. Don't let it reach zero!
+      </p>
+      <p class="mechanic-text">
+        Collect
+        <img
+          class="coin-icon"
+          src="img/7_statusbars/3_icons/icon_coin.png"
+          alt="Coin"
+        />
+        to fill the
+        <img
+          class="icon-bar"
+          src="img/7_statusbars/1_statusbar/1_statusbar_coin/green/100.png"
+          alt="Coin Bar"
+        />. When full, your health will be restored!
+      </p>
+      <p class="mechanic-text">
+        Defeat the final boss to win the game! Use your
+        <img
+          class="icon-bottle"
+          src="img/6_salsa_bottle/salsa_bottle.png"
+          alt="Bottle"
+        />
+        wisely.
+      </p>
+    </div>
+  </div>
+  `; }
 
 function playGameButtonHTML() {
   return /*html*/ `
@@ -66,7 +133,8 @@ function gameOverHTML(gameState) {
   return /*html*/ `
     <div class="in-game-menu-container">
       <div class="in-game-menu-content">
-        <h3>You ${gameState === 'won' ? 'won' : 'lost'}</h3>
+        <h3>You ${gameState.won ? "won" : "lost"}</h3>
+        <p>Time: ${gameState.finalTime}</p>
         <div class="in-game-menu-buttons">
         <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
         <button onclick="backToMenu()" class="button-style menu-button" id="backToMenu">Back to menu</button>
@@ -76,7 +144,7 @@ function gameOverHTML(gameState) {
   `;
 }
 
-function creditsHTML() {
+function creditsButtonsHTML() {
   return /*html*/ `
     <div class="credits-container">
       <div class="credits-buttons">
@@ -99,12 +167,12 @@ function legalNoticeHTML() {
   return /*html*/ `
     <div class="legal-notice-container">
       <h1>Imprint</h1>
-      <p><b>Information in accordance with Section 5 TMG</b></p>
+      <h2>Information in accordance with Section 5 TMG</h2>
       <p>Adrian Krynicki</p>
       <p>Gerauer Straße 96a</p>
       <p>60528 Frankfurt am Main</p>
       <p></p>
-      <p><b>Contact</b></p>
+      <h2>Contact</h2>
       <p>adrian.krynicki88@gmail.com</p>
       <p>+49 172 72 71 417</p>
     </div>
@@ -137,7 +205,7 @@ function privacyPolicyHTML() {
       </p>
       <p>
         <span>2. Hosting</span> 
-        We host the contents of our website with the following provider: External Hosting. This website is hosted externally. The personal data collected on this website is stored on the servers of the host(s). This may include, but is not limited to, IP addresses, contact requests, metadata and communications data, contract data, contact details, names, website access, and other data generated through a website. External hosting is done for the purpose of contract fulfillment with our potential and existing customers (Art. 6(1)(b) GDPR) and in the interest of secure, fast, and efficient provision of our online services by a professional provider (Art. 6(1)(f) GDPR). If appropriate consent has been obtained, the processing is carried out exclusively on the basis of Art. 6(1)(a) GDPR and § 25(1) TTDSG, insofar as the consent includes the storage of cookies or access to information in the user's end device (e.g., device fingerprinting) as defined by the TTDSG. This consent can be revoked at any time. Our host(s) will only process your data to the extent necessary to fulfill their performance obligations and will follow our instructions with regard to this data. We use the following host(s): Sample AG, Sample Street 1, 00000 Sample City.
+        We host the contents of our website with the following provider: External Hosting. This website is hosted externally. The personal data collected on this website is stored on the servers of the host(s). This may include, but is not limited to, IP addresses, contact requests, metadata and communications data, contract data, contact details, names, website access, and other data generated through a website. External hosting is done for the purpose of contract fulfillment with our potential and existing customers (Art. 6(1)(b) GDPR) and in the interest of secure, fast, and efficient provision of our online services by a professional provider (Art. 6(1)(f) GDPR). If appropriate consent has been obtained, the processing is carried out exclusively on the basis of Art. 6(1)(a) GDPR and § 25(1) TTDSG, insofar as the consent includes the storage of cookies or access to information in the user's end device (e.g., device fingerprinting) as defined by the TTDSG. This consent can be revoked at any time. Our host(s) will only process your data to the extent necessary to fulfill their performance obligations and will follow our instructions with regard to this data. We use the following host(s): Adrian Krynicki, Gerauer Straße 96a, 60528 Frankfurt am Main.
       </p>
       <p>
         <span>3. General Information and Mandatory Information on Data Protection</span> 
@@ -146,10 +214,11 @@ function privacyPolicyHTML() {
       <p>
         <span>Information about the Responsible Party</span> 
         The party responsible for data processing on this website is:
-        [Name]
-        [Address]
-        [Phone]
-        [Email]
+        Adrian Krynicki
+        Gerauer Straße 96a
+        60528 Frankfurt am Main
+        +49 172 72 71 417
+        adrian.krynicki88@gmail.com
         The responsible party is the natural or legal person who alone or jointly with others determines the purposes and means of the processing of personal data (e.g., names, email addresses, etc.).
       </p>
       <p>
@@ -224,14 +293,14 @@ function privacyPolicyHTML() {
   `;
 }
 
-function responsiveControlsHTML() { 
+function responsiveControlsHTML() {
   return /*html*/ `
         <div class="buttons-left-container">
       <button
         onmousedown="controls.jump()"
         onmouseup="resetKeyboard()"
         ontouchstart="controls.jump()"
-        ontouchend="reset()"
+        ontouchend="resetKeyboard()"
         id="jump"
         class="controll-button"
       >
@@ -241,7 +310,7 @@ function responsiveControlsHTML() {
         onmousedown="controls.left()"
         onmouseup="resetKeyboard()"
         ontouchstart="controls.left()"
-        ontouchend="reset()"
+        ontouchend="resetKeyboard()"
         id="left"
         class="controll-button"
       >
@@ -253,7 +322,7 @@ function responsiveControlsHTML() {
         onmousedown="controls.throwBottle()" 
         onmouseup="resetKeyboard()"
         ontouchstart="controls.throwBottle()"
-        ontouchend="reset()"
+        ontouchend="resetKeyboard()"
         id="throw"
         class="controll-button"
       >
@@ -263,13 +332,12 @@ function responsiveControlsHTML() {
         onmousedown="controls.right()"
         onmouseup="resetKeyboard()"
         ontouchstart="controls.right()"
-        ontouchend="reset()"
+        ontouchend="resetKeyboard()"
         id="right"
         class="controll-button"
       >
         Right
       </button>
     </div>
-  `; 
+  `;
 }
-
