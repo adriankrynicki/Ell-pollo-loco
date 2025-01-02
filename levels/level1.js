@@ -2,71 +2,9 @@ let level1;
 
 function initializeLevel1() {
   level1 = new Level(
-    [
-      new Chicken(1),
-      new Chicken(2),
-      new Chicken(3),
-      new Chicken(4),
-      new Chicken(5),
-      new Chicken(6),
-      new Chicken(7),
-      new Chicken(8),
-      new Chicken(9),
-      new Chicken(10),
-      new SmallChicken(1),
-      new SmallChicken(2),
-      new SmallChicken(3),
-      new SmallChicken(4),
-      new SmallChicken(5),
-      new SmallChicken(6),
-      new SmallChicken(7),
-      new SmallChicken(8),
-      new SmallChicken(9),
-      new SmallChicken(10),
-      new Endboss(99),
-    ],
-    [new Clouds()],
-    [
-      new BackgroundObject("img/5_background/layers/air.png", -719),
-      new BackgroundObject("img/5_background/layers/3_third_layer/2.png", -719),
-      new BackgroundObject("img/5_background/layers/2_second_layer/2.png", -719),
-      new BackgroundObject("img/5_background/layers/1_first_layer/2.png", -719),
-
-      new BackgroundObject("img/5_background/layers/air.png", 0),
-      new BackgroundObject("img/5_background/layers/3_third_layer/1.png", 0),
-      new BackgroundObject("img/5_background/layers/2_second_layer/1.png", 0),
-      new BackgroundObject("img/5_background/layers/1_first_layer/1.png", 0),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719),
-      new BackgroundObject("img/5_background/layers/3_third_layer/2.png", 719),
-      new BackgroundObject("img/5_background/layers/2_second_layer/2.png", 719),
-      new BackgroundObject("img/5_background/layers/1_first_layer/2.png", 719),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719 * 2),
-      new BackgroundObject("img/5_background/layers/3_third_layer/1.png", 719 * 2),
-      new BackgroundObject("img/5_background/layers/2_second_layer/1.png", 719 * 2),
-      new BackgroundObject("img/5_background/layers/1_first_layer/1.png", 719 * 2),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719 * 3),
-      new BackgroundObject("img/5_background/layers/3_third_layer/2.png", 719 * 3),
-      new BackgroundObject("img/5_background/layers/2_second_layer/2.png", 719 * 3),
-      new BackgroundObject("img/5_background/layers/1_first_layer/2.png", 719 * 3),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719 * 4),
-      new BackgroundObject("img/5_background/layers/3_third_layer/1.png", 719 * 4),
-      new BackgroundObject("img/5_background/layers/2_second_layer/1.png", 719 * 4),
-      new BackgroundObject("img/5_background/layers/1_first_layer/1.png", 719 * 4),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719 * 5),
-      new BackgroundObject("img/5_background/layers/3_third_layer/2.png", 719 * 5),
-      new BackgroundObject("img/5_background/layers/2_second_layer/2.png", 719 * 5),
-      new BackgroundObject("img/5_background/layers/1_first_layer/2.png", 719 * 5),
-
-      new BackgroundObject("img/5_background/layers/air.png", 719 * 6),
-      new BackgroundObject("img/5_background/layers/3_third_layer/1.png", 719 * 6),
-      new BackgroundObject("img/5_background/layers/2_second_layer/1.png", 719 * 6),
-      new BackgroundObject("img/5_background/layers/1_first_layer/1.png", 719 * 6),
-    ],
+    createEnemies(),
+    createClouds(),
+    createBackgroundObjects(),
     [
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 1),
       new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 2),
@@ -77,7 +15,6 @@ function initializeLevel1() {
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 9),
     ],
     [
-      new CollectableCoin("img/8_coin/coin_2.png", 350, 300),
       new CollectableCoin("img/8_coin/coin_2.png", 350, 300),
       new CollectableCoin("img/8_coin/coin_2.png", 350, 300),
       new CollectableCoin("img/8_coin/coin_2.png", 350, 300),
@@ -104,4 +41,56 @@ function initializeLevel1() {
       new CollectableCoin("img/8_coin/coin_2.png", 2500, 300),
     ]
   );
+}
+
+function createEnemies() {
+  let enemies = [];
+  
+  for (let i = 1; i <= 15; i++) {
+      enemies.push(new Chicken(i));
+  }
+  
+  for (let i = 1; i <= 15; i++) {
+      enemies.push(new SmallChicken(i));
+  }
+  
+  enemies.push(new Endboss(99));
+  
+  return enemies;
+}
+
+function calculateBackgroundPosition(blockIndex) {
+    return blockIndex * 719 - 719;
+}
+
+function getImageType(blockIndex) {
+  return blockIndex % 2 === 0 ? '1' : '2';
+}
+
+function createBackgroundObjects() {
+    let backgroundObjects = [];
+    
+    for (let i = 0; i < 10; i++) {
+        const x = calculateBackgroundPosition(i);
+        const imageType = getImageType(i);
+        
+        backgroundObjects.push(
+            new BackgroundObject(`img/5_background/layers/air.png`, x),
+            new BackgroundObject(`img/5_background/layers/3_third_layer/${imageType}.png`, x),
+            new BackgroundObject(`img/5_background/layers/2_second_layer/${imageType}.png`, x),
+            new BackgroundObject(`img/5_background/layers/1_first_layer/${imageType}.png`, x)
+        );
+    }
+    return backgroundObjects;
+}
+
+function createClouds() {
+    let clouds = [];
+    
+    for (let i = 0; i < 10; i++) {
+        const x = calculateBackgroundPosition(i);
+        const imageType = getImageType(i);
+        clouds.push(new Clouds(x, imageType));
+    }
+    return clouds;
 }
