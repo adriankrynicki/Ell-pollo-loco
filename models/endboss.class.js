@@ -44,17 +44,26 @@ class Endboss extends MovableObject {
 
   constructor(number, isAnimated) {
     super().loadImage(this.IMAGES_ALERT[0]);
-    this.loadImages(this.IMAGES_ALERT);
-    this.loadImages(this.IMAGES_WALKING);
-    this.loadImages(this.IMAGES_HURT);
-    this.loadImages(this.IMAGES_DEAD);
-    this.loadImages(this.IMAGES_ATTACK);
+    this.endbossImages();
     this.applayGravity();
     this.isAnimated = isAnimated;
     this.animationInterval = null;
-    
+
     this.number = number;
-    this.x = 2000;
+    this.x = 5500;
+  }
+
+  endbossImages() {
+    let endbossImages = [
+      this.IMAGES_ALERT,
+      this.IMAGES_WALKING,
+      this.IMAGES_ATTACK,
+      this.IMAGES_HURT,
+      this.IMAGES_DEAD,
+    ];
+    endbossImages.forEach((images) => {
+      this.loadImages(images);
+    });
   }
 
   startAnimation() {
@@ -74,7 +83,7 @@ class Endboss extends MovableObject {
       } else {
         this.playAnimation(this.IMAGES_ALERT);
       }
-    }, 200);
+    }, 180);
   }
 
   stopAnimation() {
@@ -87,7 +96,7 @@ class Endboss extends MovableObject {
   attackAnimation() {
     this.playAnimation(this.IMAGES_ATTACK);
     if (!this.isAboveGround()) {
-      this.speedY = -50;
+      this.speedY = -40;
     }
     setTimeout(() => {
       this.isAttacking = false;
@@ -115,5 +124,14 @@ class Endboss extends MovableObject {
 
   endbossHurtSound() {
     world.sounds.playAudio("endboss");
+  }
+
+  getHitbox() {
+    return {
+      x: this.x + this.width * 0.15,  // 15% vom Rand
+      y: this.y + this.height * 0.1,
+      width: this.width * 0.7,   // 70% der Originalbreite
+      height: this.height * 0.8
+    };
   }
 }
