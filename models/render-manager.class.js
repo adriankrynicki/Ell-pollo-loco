@@ -13,9 +13,11 @@ class RenderManager {
   renderBackgroundObjects(level, camera_x) {
     if (!level) return;
     this.ctx.translate(camera_x, 0);
-    this.addObjectToMap(level.backgroundObject);
+    
+    this.drawBackgroundObjects(level, camera_x);
     this.addObjectToMap(level.collectableBottles);
     this.addObjectToMap(level.collectableCoins);
+    
     this.ctx.translate(-camera_x, 0);
   }
 
@@ -23,7 +25,7 @@ class RenderManager {
     if (!level) return;
     this.ctx.translate(camera_x, 0);
 
-    this.addObjectToMap(level.clouds);
+    this.drawClouds(level, camera_x);
     this.addToMap(character);
     this.drawEnemies(level, character);
     bottleThrowManager.drawBottles();
@@ -63,9 +65,20 @@ class RenderManager {
     this.ctx.restore();
   }
 
+  drawBackgroundObjects(level, camera_x) {
+    let viewportStart = -camera_x - 719;
+    let viewportEnd = -camera_x + this.canvas.width + 719;
+
+    const visibleBackgrounds = level.backgroundObject.filter(bg => 
+        bg.x >= viewportStart && bg.x <= viewportEnd
+    );
+    
+    this.addObjectToMap(visibleBackgrounds);
+  }
+
   drawEnemies(level, character) {
-    let viewportStart = character.x - 200;
-    let viewportEnd = character.x + 500;
+    let viewportStart = character.x - 1000;
+    let viewportEnd = character.x + 720;
     this.handleEnemiesVisibility(level.enemies, character, viewportStart, viewportEnd);
     this.addObjectToMap(level.enemies.filter(enemy => enemy.isAnimated));
   }
@@ -128,5 +141,16 @@ class RenderManager {
     } else {
       this.stopEnemyAnimation(enemy);
     }
+  }
+
+  drawClouds(level, camera_x) {
+    let viewportStart = -camera_x - 719;
+    let viewportEnd = -camera_x + this.canvas.width + 719;
+
+    const visibleClouds = level.clouds.filter(cloud => 
+        cloud.x >= viewportStart && cloud.x <= viewportEnd
+    );
+    
+    this.addObjectToMap(visibleClouds);
   }
 }
