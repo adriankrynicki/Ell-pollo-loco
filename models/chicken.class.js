@@ -23,7 +23,7 @@ class Chicken extends MovableObject {
   }
 
   getCoordinates(id) {
-    let coordinates = [500, 900, 800, 1000, 1300, 1600, 1900, 2300, 2500, 2800];
+    let coordinates = [725, 1400, 1500, 2200, 2300, 2400, 3000, 3300, 3400, 3500, 4000, 4100, 4300, 4700, 4800];
     let index = id - 1;
     let startPosition;
 
@@ -84,5 +84,14 @@ class Chicken extends MovableObject {
 
   deadChickenSound() {
     world.sounds.playAudio("chicken");  
+  }
+
+  getHitbox() {
+    return {
+      x: this.x + this.width * 0.15,  // 15% vom Rand
+      y: this.y + this.height * 0.1,
+      width: this.width * 0.7,   // 70% der Originalbreite
+      height: this.height * 0.8
+    };
   }
 }
