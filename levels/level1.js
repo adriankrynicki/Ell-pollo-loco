@@ -9,10 +9,13 @@ function initializeLevel1() {
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 1),
       new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 2),
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 3),
+      new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 4),
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 5),
       new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 6),
+      new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 7),
       new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 8),
       new CollectableBottles("img/6_salsa_bottle/1_salsa_bottle_on_ground.png", 9),
+      new CollectableBottles("img/6_salsa_bottle/2_salsa_bottle_on_ground.png", 10),
     ],
     [
       new CollectableCoin("img/8_coin/coin_2.png", 350, 300),

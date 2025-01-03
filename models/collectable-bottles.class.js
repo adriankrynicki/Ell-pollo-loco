@@ -10,14 +10,14 @@ class CollectableBottles extends DrawableObject {
     }
   
     getCoordinates(bottleCount) {
-      let coordinates = [300, 300, 300, 500, 800, 1000, 1300, 1600, 1900, 2300, 2500, 2800];
+      let coordinates = [720, 1400, 1700, 2800, 3100, 3600, 3900, 4200, 4500, 5000];
       let index = bottleCount - 1;
       let startPosition;
   
       if (index >= 0 && index < coordinates.length) {
         startPosition = coordinates[index];
       } else {
-        startPosition = 300;
+        startPosition = 700;
       }
   
       return startPosition;
