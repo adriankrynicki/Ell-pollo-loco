@@ -141,7 +141,7 @@ class CollisionHandler {
       this.onAnEnemy = true;
       chicken.hit();
       chicken.deadChickenSound();
-      this.character.speedY = -20;
+      this.character.performShortJump();
       this.character.jumpSound();
       this.deleteChicken(chicken);
     }
@@ -152,7 +152,7 @@ class CollisionHandler {
       this.onAnEnemy = true;
       smallChicken.hit();
       smallChicken.deadSmallChickenSound();
-      this.character.speedY = -20;
+      this.character.performShortJump();
       this.character.jumpSound();
       this.deleteChicken(smallChicken);
     }

@@ -4,7 +4,6 @@ class Character extends MovableObject {
   width = 135;
   height = 270;
   speed = 7;
-  world;
   isSleeping = false;
   userIsPlaying = false;
   sleepCountdown = 0;
@@ -12,6 +11,9 @@ class Character extends MovableObject {
   bottleThrowTimer = 0;
   lastAnimationUpdate = 0;
   lastStateUpdate = 0;
+  isJumpAnimationComplete = false;
+  isShortJumpAnimationComplete = false;
+  isPerformingShortJump = false;
 
   IMAGES_WALKING = [
     "img/2_character_pepe/2_walk/W-21.png",
@@ -91,16 +93,16 @@ class Character extends MovableObject {
       interval: 120,
     },
     {
-      condition: () => this.isAboveGround() && !this.isOnEnemy(),
+      condition: () => this.isAboveGround() && !this.isPerformingShortJump && !this.isJumpAnimationComplete,
       state: "jumping",
       images: this.IMAGES_JUMPING,
-      interval: 200,
+      interval: 120,
     },
     {
-      condition: () => this.isAboveGround() && this.isOnEnemy(),
+      condition: () => this.isAboveGround() && this.isPerformingShortJump && !this.isShortJumpAnimationComplete,
       state: "jumpingShort",
       images: this.IMAGES_JUMPING_SHORT,
-      interval: 100,
+      interval: 80,
     },
     {
       condition: () => this.world?.keyboard.RIGHT || this.world?.keyboard.LEFT,
@@ -128,10 +130,11 @@ class Character extends MovableObject {
     },
   ];
 
-  constructor() {
+  constructor(world) {
     super().loadImage("img/2_character_pepe/1_idle/idle/I-1.png");
     this.characterImages();
     this.applayGravity();
+    this.world = world;
 
     this.animate();
   }
@@ -179,6 +182,7 @@ class Character extends MovableObject {
     this.toggleBottleThrow();
     this.checkWalkSound();
     this.handleAnimationStates();
+    this.resetJumpStates();
   }
 
   handleWalkingRight() {
@@ -201,7 +205,10 @@ class Character extends MovableObject {
     if (this.world.keyboard.UP && !this.isAboveGround()) {
       this.speedY = -27;
       this.world.sounds.playAudio("jump");
-      this.currentImage = 1;
+      this.currentImage = 0;
+      this.isJumpAnimationComplete = false;
+      this.isShortJumpAnimationComplete = false;
+      this.isPerformingShortJump = false;
       this.userIsPlaying = true;
     }
   }
@@ -212,7 +219,8 @@ class Character extends MovableObject {
       this.world.keyboard.LEFT ||
       this.world.keyboard.UP ||
       this.world.keyboard.D ||
-      this.isHurt()
+      this.isHurt() ||
+      (this.world.gamePaused && !this.isSleeping)
     ) {
       this.userIsPlaying = true;
       this.isSleeping = false;
@@ -238,6 +246,8 @@ class Character extends MovableObject {
   }
 
   startSleeping() {
+    if (this.world.gamePaused) return;
+    
     if (!this.sleepCountdown) this.sleepCountdown = 0;
     this.sleepCountdown++;
     if (this.sleepCountdown >= 300 && !this.isSleeping) {
@@ -267,6 +277,12 @@ class Character extends MovableObject {
 
     if (!this.lastStateUpdate || currentTime - this.lastStateUpdate >= animation.interval) {
         this.playAnimation(animation.images);
+        
+        if (this.currentImage >= animation.images.length - 1) {
+            if (animation.state === "jumping") this.isJumpAnimationComplete = true;
+            if (animation.state === "jumpingShort") this.isShortJumpAnimationComplete = true;
+        }
+        
         this.lastStateUpdate = currentTime;
     }
   }
@@ -300,6 +316,22 @@ class Character extends MovableObject {
     }
     if (this.isAboveGround()) {
       this.world.sounds.pauseAudio("walk");
+    }
+  }
+
+  performShortJump() {
+    this.speedY = -20;
+    this.currentImage = 0;
+    this.isShortJumpAnimationComplete = false;
+    this.isPerformingShortJump = true;
+    this.userIsPlaying = true;
+  }
+
+  resetJumpStates() {
+    if (!this.isAboveGround()) {
+      this.isJumpAnimationComplete = false;
+      this.isShortJumpAnimationComplete = false;
+      this.isPerformingShortJump = false;
     }
   }
 }
