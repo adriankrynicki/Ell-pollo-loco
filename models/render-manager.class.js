@@ -64,14 +64,14 @@ class RenderManager {
     };
   }
 
+  renderStatusBars(bars) {
+    bars.forEach((bar) => this.addToMap(bar));
+  }
+
   filterVisibleObjects(objects, viewport) {
     return objects.filter(
       (obj) => obj.x >= viewport.start && obj.x <= viewport.end
     );
-  }
-
-  renderStatusBars(bars) {
-    bars.forEach((bar) => this.addToMap(bar));
   }
 
   addObjectToMap(objects) {
