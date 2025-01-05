@@ -297,20 +297,20 @@ function responsiveControlsHTML() {
   return /*html*/ `
         <div class="buttons-left-container">
       <button
-        onmousedown="controls.jump()"
-        onmouseup="resetKeyboard()"
-        ontouchstart="controls.jump()"
-        ontouchend="resetKeyboard()"
+        onmousedown="controls.jump(true)"
+        onmouseup="controls.jump(false)"
+        ontouchstart="controls.jump(true)"
+        ontouchend="controls.jump(false)"
         id="jump"
         class="controll-button"
       >
         Jump
       </button>
       <button
-        onmousedown="controls.left()"
-        onmouseup="resetKeyboard()"
-        ontouchstart="controls.left()"
-        ontouchend="resetKeyboard()"
+        onmousedown="controls.left(true)"
+        onmouseup="controls.left(false)"
+        ontouchstart="controls.left(true)"
+        ontouchend="controls.left(false)"
         id="left"
         class="controll-button"
       >
@@ -319,20 +319,20 @@ function responsiveControlsHTML() {
     </div>
     <div class="buttons-right-container">
       <button
-        onmousedown="controls.throwBottle()" 
-        onmouseup="resetKeyboard()"
-        ontouchstart="controls.throwBottle()"
-        ontouchend="resetKeyboard()"
+        onmousedown="controls.throwBottle(true)" 
+        onmouseup="controls.throwBottle(false)"
+        ontouchstart="controls.throwBottle(true)"
+        ontouchend="controls.throwBottle(false)"
         id="throw"
         class="controll-button"
       >
         Throw
       </button>
       <button
-        onmousedown="controls.right()"
-        onmouseup="resetKeyboard()"
-        ontouchstart="controls.right()"
-        ontouchend="resetKeyboard()"
+        onmousedown="controls.right(true)"
+        onmouseup="controls.right(false)"
+        ontouchstart="controls.right(true)"
+        ontouchend="controls.right(false)"
         id="right"
         class="controll-button"
       >

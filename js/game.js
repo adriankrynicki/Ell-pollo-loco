@@ -55,10 +55,12 @@ function startTimerLoop() {
 }
 
 function updateTimer(timestamp) {
-  if (!world.gamePaused) {
+  if (!world?.gamePaused) {
     updateTimeIfNeeded(timestamp);
   }
-  timerInterval = requestAnimationFrame(updateTimer);
+  if (world && !world.gameOver) {
+    timerInterval = requestAnimationFrame(updateTimer);
+  }
 }
 
 function updateTimeIfNeeded(timestamp) {
@@ -188,21 +190,17 @@ function finalizeGameStart() {
 }
 
 const controls = {
-  left: () => {
-    resetKeyboard();
-    keyboard.LEFT = true;
+  left: (isPressed) => {
+    keyboard.LEFT = isPressed;
   },
-  right: () => {
-    resetKeyboard();
-    keyboard.RIGHT = true;
+  right: (isPressed) => {
+    keyboard.RIGHT = isPressed;
   },
-  jump: () => {
-    resetKeyboard();
-    keyboard.UP = true;
+  jump: (isPressed) => {
+    keyboard.UP = isPressed;
   },
-  throwBottle: () => {
-    resetKeyboard();
-    keyboard.D = true;
+  throwBottle: (isPressed) => {
+    keyboard.D = isPressed;
   },
 };
 
@@ -367,10 +365,15 @@ function restartGame() {
 }
 
 function initializeAudioListeners() {
-  soundOn.addEventListener("click", handleSoundToggle);
-  soundOff.addEventListener("click", handleSoundToggle);
-  musicON.addEventListener("click", handleMusicToggle);
-  musicOff.addEventListener("click", handleMusicToggle);
+  const audioControls = document.getElementById('audio-controls');
+  audioControls.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.matches('#sound-on, #sound-off')) {
+      handleSoundToggle();
+    } else if (target.matches('#music-on, #music-off')) {
+      handleMusicToggle();
+    }
+  });
   pauseButton.addEventListener("click", openInGameMenu);
 }
 
@@ -446,4 +449,12 @@ document.addEventListener("gameOver", () => {
   resetKeyboard();
   keyboardActive = false;
 });
+
+const domElements = {
+  canvas: document.getElementById('canvas'),
+  gameContainer: document.getElementById('game-container'),
+  audioControls: document.getElementById('audio-controls'),
+  timeContainer: document.getElementById('time-container'),
+  // ... weitere häufig verwendete Elemente
+};
 
