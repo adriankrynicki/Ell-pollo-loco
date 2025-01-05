@@ -42,6 +42,63 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
+  lastStateUpdate = 0;
+  animationInterval = 1000; // Zeit in Millisekunden zwischen den Frames
+  animationFrameId = null;
+
+  animations = [
+    {
+      condition: () => this.isDead(),
+      state: 'dead',
+      images: this.IMAGES_DEAD,
+      interval: 200,
+      action: () => {} // Keine Aktion wenn tot
+    },
+    {
+      condition: () => this.isEndbossHurt(),
+      state: 'hurt',
+      images: this.IMAGES_HURT,
+      interval: 150,
+      action: () => {} // Keine Aktion wenn verletzt
+    },
+    {
+      condition: () => this.isAttacking,
+      state: 'attack',
+      images: this.IMAGES_ATTACK,
+      interval: 200,
+      action: () => {
+        if (!this.isAboveGround()) {
+          this.speedY = -40;
+        }
+        setTimeout(() => {
+          this.isAttacking = false;
+        }, 1000);
+      }
+    },
+    {
+      condition: () => this.hp < 90,
+      state: 'walking',
+      images: this.IMAGES_WALKING,
+      interval: 200,
+      action: () => {
+        this.moveLeft();
+        this.OtherDirection = false;
+        this.distanceTraveled += this.speed;
+        if (this.distanceTraveled >= 100) {
+          this.isAttacking = true;
+          this.distanceTraveled = 0;
+        }
+      }
+    },
+    {
+      condition: () => true,
+      state: 'alert',
+      images: this.IMAGES_ALERT,
+      interval: 200,
+      action: () => {} // Keine Aktion im Alert-Zustand
+    }
+  ];
+
   constructor(number, isAnimated) {
     super().loadImage(this.IMAGES_ALERT[0]);
     this.endbossImages();
@@ -66,60 +123,34 @@ class Endboss extends MovableObject {
     });
   }
 
-  startAnimation() {
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-    }
+  handleAnimationStates() {
+    const currentTime = performance.now();
+    const animation = this.animations.find(a => a.condition());
 
-    this.animationInterval = setInterval(() => {
-      if (this.isDead()) {
-        this.deadAnimation();
-      } else if (this.isEndbossHurt()) {
-        this.hurtAnimation();
-      } else if (this.isAttacking) {
-        this.attackAnimation();
-      } else if (this.hp < 90) {
-        this.walkingAnimation();
-      } else {
-        this.playAnimation(this.IMAGES_ALERT);
-      }
-    }, 180);
+    if (!this.lastStateUpdate || 
+      currentTime - this.lastStateUpdate >= animation.interval) {
+      this.playAnimation(animation.images);
+      animation.action(); // Führe die zugehörige Aktion aus
+      this.lastStateUpdate = currentTime;
+    }
+  }
+
+  startAnimation() {
+    this.stopAnimation();
+
+    const animate = () => {
+      this.handleAnimationStates();
+      this.animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    this.animationFrameId = requestAnimationFrame(animate);
   }
 
   stopAnimation() {
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-      this.animationInterval = null;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
-  }
-
-  attackAnimation() {
-    this.playAnimation(this.IMAGES_ATTACK);
-    if (!this.isAboveGround()) {
-      this.speedY = -40;
-    }
-    setTimeout(() => {
-      this.isAttacking = false;
-    }, 1000);
-  }
-
-  walkingAnimation() {
-    this.playAnimation(this.IMAGES_WALKING);
-    this.moveLeft();
-    this.OtherDirection = false;
-    this.distanceTraveled += this.speed;
-    if (this.distanceTraveled >= 100) {
-      this.isAttacking = true;
-      this.distanceTraveled = 0;
-    }
-  }
-
-  hurtAnimation() {
-    this.playAnimation(this.IMAGES_HURT);
-  }
-
-  deadAnimation() {
-    this.playAnimation(this.IMAGES_DEAD);
   }
 
   endbossHurtSound() {
