@@ -2,6 +2,7 @@ html,
 body {
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
@@ -22,26 +23,19 @@ canvas {
   z-index: 0;
   border: 5px solid rgb(163, 67, 33);
   border-radius: 5px;
-  width: 100%;
-  min-width: 480px;
-  max-width: 720px;
-  min-height: 320px;
-  max-height: 480px;
 }
 
 .main-container {
-  min-width: 480px;
   max-width: 720px;
-  width: 100%;
-  height: 100vh;
   max-height: 480px;
-  min-height: 320px;
+  width: auto;
+  height: 100vh;
   position: relative;
   display: flex;
   align-items: flex-start;
   flex-direction: column;
   align-items: center;
-  aspect-ratio: 3 / 2 !important;
+  aspect-ratio: 3 / 2;
 }
 
 .start-screen {
@@ -93,7 +87,7 @@ canvas {
   border-top: 4px solid rgb(163, 67, 33);
   width: 100%;
   display: flex;
-  height: 100%;
+  height: 99%;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -101,7 +95,7 @@ canvas {
 
 .info-container h1 {
   font-size: 40px;
-  font-weight: 100;
+  font-weight: bold;
   margin: 16px 0 40px 0;
 }
 
@@ -177,6 +171,9 @@ canvas {
 }
 
 .time-container {
+  font-family: "Caprasimo", serif;
+  font-style: italic;
+  font-weight: 100;
   margin: 8px 84px 0 0;
   font-size: 26px;
 }
@@ -255,12 +252,6 @@ canvas {
   will-change: box-shadow, transform;
 }
 
-.time-container {
-  font-family: "Caprasimo", serif;
-  font-style: italic;
-  font-weight: 100;
-}
-
 .play-game-button:focus {
   box-shadow: rgb(163, 67, 33) 0 0 0 1.5px inset,
     rgba(45, 35, 66, 0.4) 0 2px 4px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
@@ -306,6 +297,10 @@ canvas {
   align-items: center;
 }
 
+.background-color {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
 .d-key-border {
   border: 3px solid white;
   border-radius: 5px;
@@ -347,10 +342,9 @@ canvas {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -49%);
   width: 720px;
-  height: 480px;
-  background-color: rgba(0, 0, 0, 0.8);
+  height: 481px;
   border-radius: 5px;
   z-index: 999;
 }
@@ -371,7 +365,7 @@ canvas {
   box-shadow: 1px 1px 5px 0 rgb(73 73 73 / 70%);
 }
 
-.in-game-menu-content h3 {
+.game-status-text {
   font-size: 56px;
   margin: 30px 0 16px 0;
   font-family: "Caprasimo", serif;
@@ -395,7 +389,7 @@ canvas {
   gap: 32px;
 }
 
-.tab-content h2 {
+.how-to-play-content h1 {
   font-size: 40px;
   margin: 0px 0 41px 0;
   font-weight: 100;
@@ -425,14 +419,13 @@ canvas {
   margin: 0 0 32px 0;
 }
 
-.tab-content {
+.how-to-play-content {
   background-color: rgba(0, 0, 0, 0.8);
   border-top: 4px solid rgb(163, 67, 33);
   width: 100%;
   display: flex;
   height: 100%;
   align-items: center;
-  justify-content: center;
   flex-direction: column;
 }
 
@@ -587,7 +580,7 @@ canvas {
 
 .loading-text {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   font-size: 80px;
   font-weight: bold;
   background-image: url("img/desert1.jpg");
@@ -595,8 +588,7 @@ canvas {
   background-position: center;
   max-width: 720px;
   max-height: 480px;
-  min-width: 480px;
-  min-height: 320px;
+  position: absolute;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -676,7 +668,7 @@ canvas {
   pointer-events: auto;
 }
 
-.controll-button {
+.responsive-button {
   color: black;
   font-weight: bold;
   font-size: calc(10px + 1vw);
@@ -707,7 +699,7 @@ canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
-.controll-button:active {
+.responsive-button:active {
   transform: scale(0.95);
   background-color: rgba(255, 255, 255, 0.2);
 }
@@ -715,6 +707,11 @@ canvas {
 @media only screen and (max-width: 720px) {
   canvas {
     width: 100%;
+  }
+  .main-container {
+    height: 100vh;
+    width: auto;
+    max-width: none;
   }
 }
 
@@ -732,7 +729,7 @@ canvas {
     height: 32px;
     font-size: 16px;
   }
-  .controls-container {
+  .responsive-buttons-container {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -749,16 +746,20 @@ canvas {
     margin: 8px;
   }
   .legal-notice-container h1 {
-    font-size: 32px;
-    margin: 8px;
+    font-size: 28px;
+    margin: 2px;
   }
   .legal-notice-container p {
-    margin: 2px;
+    margin: 0;
     font-size: 16px;
   }
+  .legal-notice-container h2 {
+    font-size: 20px;
+    margin: 0px 0px 6px 0;
+  }
   .privacy-policy-container h1 {
-    font-size: 32px;
-    margin: 8px 0 8px 0;
+    font-size: 28px;
+    margin: 2px 0 2px 0;
   }
   .privacy-policy-container p {
     margin: 2px;
@@ -770,5 +771,67 @@ canvas {
   }
   .privacy-policy-container {
     max-height: 70vh;
+  }
+  .controls-content h1 {
+    font-size: 28px;
+    margin: 2px 0 5px 0;
+  }
+  .controls-content p {
+    margin: 0 0 10px 0;
+  }
+  .arrow-key-border {
+    width: 30px;
+    height: 26px;
+  }
+  .d-key-border {
+    width: 30px;
+    height: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+  }
+  .how-to-play-content h1 {
+    font-size: 28px;
+    margin: 2px 0 5px 0;
+    font-weight: bold;
+  }
+  .mechanic-text {
+    font-size: 14px;
+    margin: 0 0 8px 0;
+  }
+  .in-game-menu-container {
+    width: 100%;
+  }
+  .game-status-text {
+    font-size: 45px;
+    margin: 9px 0 31px 0;
+  }
+  .in-game-menu-content {
+    width: 44%;
+    height: 63%;
+    gap: 0px;
+  }
+  .menu-button {
+    font-size: 21px;
+    min-width: 165px;
+  }
+  .in-game-menu-buttons {
+    gap: 24px;
+  }
+  .loading-text {
+    font-size: 70px;
+  }
+  .time-container {
+    margin: 4px 0 0 0;
+    font-size: 20px;
+  }
+  .nav-container {
+    gap: 161px;
+  }
+}
+@media screen and (orientation: landscape) {
+  .main-container {
+    height: 100vh;
+    width: auto;
   }
 }

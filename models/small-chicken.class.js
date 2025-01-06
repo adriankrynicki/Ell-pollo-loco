@@ -43,7 +43,6 @@ class SmallChicken extends MovableObject {
         }
         this.playAnimation(this.IMAGES_WALKING);
         this.moveLeft();
-        this.OtherDirection = false;
       }
     }, 60);
 
@@ -68,7 +67,8 @@ class SmallChicken extends MovableObject {
 
   getCoordinates(id) {
     let coordinates = [
-      1400, 2100, 2300, 2500, 3000, 3300, 3600, 3900, 4100, 4300, 4400, 4500, 4700, 4900, 5000
+      1400, 2100, 2300, 2500, 2700, 2900, 3100, 3500, 4100, 4300, 4400, 4900,
+      5200, 5500, 5600
     ];
     let index = id - 1;
     let startPosition;
@@ -84,6 +84,7 @@ class SmallChicken extends MovableObject {
 
   playDeathAnimation() {
     return new Promise((resolve) => {
+      this.speedY = 0;
       this.isDeathAnimationPlaying = true;
       this.loadImage(this.IMAGE_DEAD);
       setTimeout(() => {
@@ -104,10 +105,10 @@ class SmallChicken extends MovableObject {
 
   getHitbox() {
     return {
-      x: this.x + this.width * 0.15,  // 15% vom Rand
+      x: this.x + this.width * 0.15, // 15% vom Rand
       y: this.y + this.height * 0.1,
-      width: this.width * 0.7,   // 70% der Originalbreite
-      height: this.height * 0.8
+      width: this.width * 0.7, // 70% der Originalbreite
+      height: this.height * 0.8,
     };
   }
 

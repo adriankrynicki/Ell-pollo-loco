@@ -4,6 +4,8 @@ class RenderManager {
     this.ctx = ctx;
     this.world = world;
     this.endbossActivated = false;
+    this.lastFrameTime = 0;
+    this.frameInterval = 1000 / 60;
   }
 
   clearCanvas() {
@@ -29,18 +31,41 @@ class RenderManager {
 
   renderGameObjects(level, character, camera_x, bottleThrowManager) {
     if (!level) return;
+    
     this.renderWithTranslation(() => {
-      this.renderCollectableObjects(level, camera_x);
-      this.renderMovableObjects(character, level, bottleThrowManager);
+        this.renderCollectableObjects(level, camera_x);
+        this.renderMovableObjects(character, level, bottleThrowManager);
     }, camera_x);
   }
 
   renderCollectableObjects(level, camera_x) {
+    const viewport = this.getViewport(camera_x);
     const objectGroups = [
-      { items: level.collectableCoins, name: "coins" },
-      { items: level.collectableBottles, name: "bottles" },
+      { 
+        items: level.collectableCoins,
+        name: "coins",
+        batchSize: 10
+      },
+      { 
+        items: level.collectableBottles,
+        name: "bottles",
+        batchSize: 5
+      }
     ];
-    this.renderObjects(objectGroups, camera_x);
+    
+    objectGroups.forEach(({ items, name, batchSize }) => {
+      const visibleItems = this.filterVisibleObjects(items, viewport);
+      this.batchRenderObjects(visibleItems, batchSize);
+    });
+  }
+
+  batchRenderObjects(objects, batchSize) {
+    for (let i = 0; i < objects.length; i += batchSize) {
+      const batch = objects.slice(i, i + batchSize);
+      this.ctx.save();
+      batch.forEach(obj => this.addToMap(obj));
+      this.ctx.restore();
+    }
   }
 
   renderMovableObjects(character, level, bottleThrowManager) {
@@ -51,7 +76,7 @@ class RenderManager {
 
   renderObjects(objectGroups, camera_x) {
     const viewport = this.getViewport(camera_x);
-    objectGroups.forEach(({ items }) => {
+    objectGroups.forEach(({ items, name }) => {
       const visibleItems = this.filterVisibleObjects(items, viewport);
       this.addObjectToMap(visibleItems);
     });
@@ -79,13 +104,13 @@ class RenderManager {
   }
 
   addToMap(mo) {
-    if (mo.OtherDirection) {
+    if (mo.otherDirection) {
       this.flipImage(mo);
     }
 
     mo.draw(this.ctx);
 
-    if (mo.OtherDirection) {
+    if (mo.otherDirection) {
       this.flipImageBack(mo);
     }
   }
@@ -103,15 +128,23 @@ class RenderManager {
   }
 
   drawEnemies(level, character) {
-    let viewportStart = character.x - 1000;
-    let viewportEnd = character.x + 720;
+    const viewportStart = character.x - 200;
+    const viewportEnd = character.x + 720;
+    
     this.handleEnemiesVisibility(
-      level.enemies,
-      character,
-      viewportStart,
-      viewportEnd
+        level.enemies,
+        character,
+        viewportStart,
+        viewportEnd
     );
-    this.addObjectToMap(level.enemies.filter((enemy) => enemy.isAnimated));
+    
+    const activeEnemies = level.enemies.filter(enemy => 
+        enemy.isAnimated && 
+        enemy.x >= viewportStart && 
+        enemy.x <= viewportEnd
+    );
+
+    this.batchRenderObjects(activeEnemies, 3);
   }
 
   handleEnemiesVisibility(enemies, character, viewportStart, viewportEnd) {
@@ -123,7 +156,7 @@ class RenderManager {
 
   updateEnemyVisibility(enemy, character, viewportStart, viewportEnd) {
     if (enemy instanceof Endboss) {
-      if (character.x >= 5000) {
+      if (character.x >= 4800) {
         this.endbossActivated = true;
       }
       enemy.isAnimated = this.endbossActivated;

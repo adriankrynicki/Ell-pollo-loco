@@ -8,7 +8,7 @@ let soundOn = document.getElementById("sound-on");
 let soundOff = document.getElementById("sound-off");
 let playGameButton = document.getElementById("playGameButton");
 let gameContainer = document.getElementById("game-container");
-let controlsContainer = document.getElementById("controls-container");
+let responsiveButtonsContainer = document.getElementById("responsive-buttons-container");
 let pauseButton = document.getElementById("pause-game");
 let soundsOn = false;
 let musicOn = false;
@@ -139,10 +139,12 @@ function handleGameEndHTMLElements() {
 
     stopTimer();
 
-    console.log("Game Over State:", gameState);
-
     gameOverTimeout = setTimeout(() => {
       gameContainer.innerHTML = gameOverHTML(gameState);
+      if (gameState) {
+        responsiveButtonsContainer.classList.add("d-none");
+        responsiveButtonsContainer.classList.remove("responsive-buttons-container");
+      }
     }, 4000);
   });
 }
@@ -175,12 +177,10 @@ function finalizeGameStart() {
   toggleMusicButtons(false);
 
   if (window.innerWidth < 1000) {
-    console.log("Initialisiere Mobile Controls in finalizeGameStart");
-
-    if (controlsContainer) {
-      controlsContainer.classList.remove("d-none");
-      controlsContainer.classList.add("controls-container");
-      controlsContainer.innerHTML = responsiveControlsHTML();
+    if (responsiveButtonsContainer) {
+      responsiveButtonsContainer.classList.remove("d-none");
+      responsiveButtonsContainer.classList.add("responsive-buttons-container");
+      responsiveButtonsContainer.innerHTML = responsiveControlsHTML();
     }
   }
 
@@ -289,6 +289,8 @@ function openInGameMenu() {
   }
 
   gameContainer.innerHTML = inGameMenuHTML();
+  responsiveButtonsContainer.classList.add("d-none");
+  responsiveButtonsContainer.classList.remove("responsive-buttons-container");
 }
 
 function closeInGameMenu() {
@@ -302,6 +304,8 @@ function closeInGameMenu() {
   }
 
   gameContainer.innerHTML = "";
+  responsiveButtonsContainer.classList.remove("d-none");
+  responsiveButtonsContainer.classList.add("responsive-buttons-container");
 }
 
 function updateUIElements(uiElements) {
@@ -326,6 +330,8 @@ function backToMenu() {
 
   if (world) {
     world.pauseGame();
+    responsiveButtonsContainer.classList.add("d-none");
+    responsiveButtonsContainer.classList.remove("responsive-buttons-container");
   }
   if (gameOverTimeout) {
     clearTimeout(gameOverTimeout);
@@ -362,6 +368,8 @@ function restartGame() {
   timeContainer.classList.add("d-none");
   timeContainer.classList.remove("time-container");
   canvas.classList.add("d-none");
+  responsiveButtonsContainer.classList.add("d-none");
+  responsiveButtonsContainer.classList.remove("responsive-buttons-container");
 }
 
 function initializeAudioListeners() {

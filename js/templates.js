@@ -59,8 +59,8 @@ function controlsHTML() {
 
 function gameMechanicsHTML() { 
   return /*html*/ `
-  <div class="tab-content" id="howtoplay">
-    <h2>How to Play</h2>
+  <div class="how-to-play-content" id="howtoplay">
+    <h1>How to Play</h1>
     <div class="game-mechanics"> 
       <p class="mechanic-text">
         Collect
@@ -116,9 +116,9 @@ function playGameButtonHTML() {
 
 function inGameMenuHTML() {
   return /*html*/ `
-    <div class="in-game-menu-container">
+    <div class="in-game-menu-container background-color">
       <div class="in-game-menu-content">
-        <h3>PAUSE</h3>
+        <h3 class="game-status-text">PAUSE</h3>
         <div class="in-game-menu-buttons">
         <button onclick="closeInGameMenu()" class="button-style menu-button" id="resume">Resume game</button>
         <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
@@ -133,7 +133,7 @@ function gameOverHTML(gameState) {
   return /*html*/ `
     <div class="in-game-menu-container">
       <div class="in-game-menu-content">
-        <h3>You ${gameState.won ? "won" : "lost"}</h3>
+        <h3 class="game-status-text">You ${gameState.won ? "won" : "lost"}</h3>
         <p>Time: ${gameState.finalTime}</p>
         <div class="in-game-menu-buttons">
         <button onclick="restartGame()" class="button-style menu-button" id="reset">Reset run</button>
@@ -168,13 +168,13 @@ function legalNoticeHTML() {
     <div class="legal-notice-container">
       <h1>Imprint</h1>
       <h2>Information in accordance with Section 5 TMG</h2>
-      <p>Adrian Krynicki</p>
-      <p>Gerauer Straße 96a</p>
+      <p>Max Mustermann</p>
+      <p>Musterstraße 96a</p>
       <p>60528 Frankfurt am Main</p>
       <p></p>
       <h2>Contact</h2>
-      <p>adrian.krynicki88@gmail.com</p>
-      <p>+49 172 72 71 417</p>
+      <p>max.mustermann@gmail.com</p>
+      <p>+49 123 456 7890</p>
     </div>
   `;
 }
@@ -205,7 +205,7 @@ function privacyPolicyHTML() {
       </p>
       <p>
         <span>2. Hosting</span> 
-        We host the contents of our website with the following provider: External Hosting. This website is hosted externally. The personal data collected on this website is stored on the servers of the host(s). This may include, but is not limited to, IP addresses, contact requests, metadata and communications data, contract data, contact details, names, website access, and other data generated through a website. External hosting is done for the purpose of contract fulfillment with our potential and existing customers (Art. 6(1)(b) GDPR) and in the interest of secure, fast, and efficient provision of our online services by a professional provider (Art. 6(1)(f) GDPR). If appropriate consent has been obtained, the processing is carried out exclusively on the basis of Art. 6(1)(a) GDPR and § 25(1) TTDSG, insofar as the consent includes the storage of cookies or access to information in the user's end device (e.g., device fingerprinting) as defined by the TTDSG. This consent can be revoked at any time. Our host(s) will only process your data to the extent necessary to fulfill their performance obligations and will follow our instructions with regard to this data. We use the following host(s): Adrian Krynicki, Gerauer Straße 96a, 60528 Frankfurt am Main.
+        We host the contents of our website with the following provider: External Hosting. This website is hosted externally. The personal data collected on this website is stored on the servers of the host(s). This may include, but is not limited to, IP addresses, contact requests, metadata and communications data, contract data, contact details, names, website access, and other data generated through a website. External hosting is done for the purpose of contract fulfillment with our potential and existing customers (Art. 6(1)(b) GDPR) and in the interest of secure, fast, and efficient provision of our online services by a professional provider (Art. 6(1)(f) GDPR). If appropriate consent has been obtained, the processing is carried out exclusively on the basis of Art. 6(1)(a) GDPR and § 25(1) TTDSG, insofar as the consent includes the storage of cookies or access to information in the user's end device (e.g., device fingerprinting) as defined by the TTDSG. This consent can be revoked at any time. Our host(s) will only process your data to the extent necessary to fulfill their performance obligations and will follow our instructions with regard to this data. We use the following host(s): Max Mustermann, Musterstraße 12, 60528 Frankfurt am Main.
       </p>
       <p>
         <span>3. General Information and Mandatory Information on Data Protection</span> 
@@ -214,11 +214,11 @@ function privacyPolicyHTML() {
       <p>
         <span>Information about the Responsible Party</span> 
         The party responsible for data processing on this website is:
-        Adrian Krynicki
-        Gerauer Straße 96a
+        Max Mustermann
+        Musterstraße 12
         60528 Frankfurt am Main
-        +49 172 72 71 417
-        adrian.krynicki88@gmail.com
+        +49 123 456 7890
+        max.mustermann@gmail.com
         The responsible party is the natural or legal person who alone or jointly with others determines the purposes and means of the processing of personal data (e.g., names, email addresses, etc.).
       </p>
       <p>
@@ -302,7 +302,7 @@ function responsiveControlsHTML() {
         ontouchstart="controls.jump(true)"
         ontouchend="controls.jump(false)"
         id="jump"
-        class="controll-button"
+        class="responsive-button"
       >
         Jump
       </button>
@@ -312,7 +312,7 @@ function responsiveControlsHTML() {
         ontouchstart="controls.left(true)"
         ontouchend="controls.left(false)"
         id="left"
-        class="controll-button"
+        class="responsive-button"
       >
         Left
       </button>
@@ -324,7 +324,7 @@ function responsiveControlsHTML() {
         ontouchstart="controls.throwBottle(true)"
         ontouchend="controls.throwBottle(false)"
         id="throw"
-        class="controll-button"
+        class="responsive-button"
       >
         Throw
       </button>
@@ -334,7 +334,7 @@ function responsiveControlsHTML() {
         ontouchstart="controls.right(true)"
         ontouchend="controls.right(false)"
         id="right"
-        class="controll-button"
+        class="responsive-button"
       >
         Right
       </button>
