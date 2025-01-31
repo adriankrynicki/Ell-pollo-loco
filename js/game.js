@@ -55,10 +55,10 @@ function startTimerLoop() {
 }
 
 function updateTimer(timestamp) {
-  if (!world?.gamePaused) {
+  if (!world?.gameState.gamePaused) {
     updateTimeIfNeeded(timestamp);
   }
-  if (world && !world.gameOver) {
+  if (world && !world.gameState.gameOver) {
     timerInterval = requestAnimationFrame(updateTimer);
   }
 }
@@ -117,6 +117,14 @@ function initializeWorld() {
   canvas = document.getElementById("canvas");
   world = new World(canvas, keyboard);
 
+  world.gameState = {
+    gamePaused: false,
+    gameWon: false,
+    gameLost: false,
+    gameStateHandled: false,
+    endbossBarActivated: false,
+  };
+
   if (gameOverTimeout) {
     clearTimeout(gameOverTimeout);
   }
@@ -125,7 +133,7 @@ function initializeWorld() {
 }
 
 function handleGameEndHTMLElements() {
-  world.setGameEndCallback((gameState) => {
+  world.services.gameStateManager.setGameEndCallback((gameState) => {
     if (!gameState) gameState = {};
 
     let audioControls = document.getElementById("audio-controls");
@@ -151,10 +159,10 @@ function handleGameEndHTMLElements() {
 
 async function loadGameResources() {
   await Promise.all([
-    initializeLevel1(),
+    initializeLevel1(world.services),
     new Promise((resolve) => {
-      world.sounds.initializeAudio();
-      world.sounds.toggleGameSounds(true);
+      world.services.sounds.initializeAudio();
+      world.services.sounds.toggleGameSounds(true);
       resolve();
     }),
     new Promise((resolve) => setTimeout(resolve, 2000)),
@@ -201,6 +209,9 @@ const controls = {
   },
   throwBottle: (isPressed) => {
     keyboard.D = isPressed;
+  },
+  heal: (isPressed) => {
+    keyboard.S = isPressed;
   },
 };
 
@@ -262,16 +273,16 @@ function toggleSoundButtons(isSoundOff) {
 
 function handleSoundToggle() {
   let isSoundButtonVisible = !soundOn.classList.contains("d-none");
-  if (world && world.sounds) {
-    world.sounds.toggleGameSounds(!isSoundButtonVisible);
+  if (world && world.services.sounds) {
+    world.services.sounds.toggleGameSounds(!isSoundButtonVisible);
     toggleSoundButtons(isSoundButtonVisible);
   }
 }
 
 function handleMusicToggle() {
   let isMusicOff = !musicON.classList.contains("d-none");
-  if (world && world.sounds) {
-    world.sounds.toggleMusic(!isMusicOff);
+  if (world && world.services.sounds) {
+    world.services.sounds.toggleMusic(!isMusicOff);
     toggleMusicButtons(isMusicOff);
   }
 }
@@ -283,9 +294,9 @@ function openInGameMenu() {
   soundsOn = !soundOff.classList.contains("d-none");
   musicOn = !musicOff.classList.contains("d-none");
 
-  if (world && world.sounds) {
-    world.sounds.toggleGameSounds(true);
-    world.sounds.toggleMusic(true);
+  if (world && world.services.sounds) {
+    world.services.sounds.toggleGameSounds(true);
+    world.services.sounds.toggleMusic(true);
   }
 
   gameContainer.innerHTML = inGameMenuHTML();
@@ -298,9 +309,9 @@ function closeInGameMenu() {
   resetKeyboard();
   world.resumeGame();
 
-  if (world && world.sounds) {
-    world.sounds.toggleGameSounds(!soundsOn);
-    world.sounds.toggleMusic(!musicOn);
+  if (world && world.services.sounds) {
+    world.services.sounds.toggleGameSounds(!soundsOn);
+    world.services.sounds.toggleMusic(!musicOn);
   }
 
   gameContainer.innerHTML = "";
@@ -330,6 +341,7 @@ function backToMenu() {
 
   if (world) {
     world.pauseGame();
+    world.resetGame();
     responsiveButtonsContainer.classList.add("d-none");
     responsiveButtonsContainer.classList.remove("responsive-buttons-container");
   }
@@ -360,6 +372,8 @@ function restartGame() {
     stopTimer();
     gameOverTimeout = null;
   }
+
+  world = null;
 
   playGame();
 
@@ -429,6 +443,7 @@ function initializeKeyboardListeners() {
     if (e.keyCode == 37) keyboard.LEFT = true;
     if (e.keyCode == 39) keyboard.RIGHT = true;
     if (e.keyCode == 68) keyboard.D = true;
+    if (e.keyCode == 83) keyboard.S = true;
   });
 
   window.addEventListener("keyup", (e) => {
@@ -438,6 +453,7 @@ function initializeKeyboardListeners() {
     if (e.keyCode == 37) keyboard.LEFT = false;
     if (e.keyCode == 39) keyboard.RIGHT = false;
     if (e.keyCode == 68) keyboard.D = false;
+    if (e.keyCode == 83) keyboard.S = false;
   });
 }
 
