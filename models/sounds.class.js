@@ -14,13 +14,15 @@ class Sounds {
       bottle_collect: new Audio("audio/bottle_collect.mp3"),
       character_hurt: new Audio("audio/character_hurt.mp3"),
       character_dead: new Audio("audio/character_dead.mp3"),
-      chicken: new Audio("audio/chicken.mp3"),
-      coin: new Audio("audio/coin.mp3"),
-      endboss: new Audio("audio/endboss.mp3"),
+      chicken_dead: new Audio("audio/chicken.mp3"),
+      coin_collect: new Audio("audio/coin.mp3"),
+      endboss_attack: new Audio("audio/endboss_attack.mp3"),
+      endboss_hurt: new Audio("audio/endboss_hurt.mp3"),
       endboss_dead: new Audio("audio/endboss_dead.mp3"),
+      endboss_walking: new Audio("audio/endboss_walking.mp3"),
       jump: new Audio("audio/jump.mp3"),
-      small_chicken: new Audio("audio/small_chicken.mp3"),
-      walk: new Audio("audio/walk.mp3"),
+      small_chicken_dead: new Audio("audio/small_chicken.mp3"),
+      character_walking: new Audio("audio/character_walking.mp3"),
       snoring: new Audio("audio/snoring.mp3"),
       hp_restored: new Audio("audio/hp_restored.mp3"),
       win: new Audio("audio/win.mp3"),
@@ -89,8 +91,12 @@ class Sounds {
   async handleAudioPlayback(audio, audioName) {
     if (this.isBackgroundSound(audioName)) {
       await this.playBackgroundSound(audio, audioName);
-    } else if (audioName === "endboss") {
-      await this.playEndbossSound(audio);
+    } else if (
+      audioName === "endboss_hurt" ||
+      audioName === "coin_collect" ||
+      audioName === "bottle_collect"
+    ) {
+      await this.fastRepeat(audio);
     } else {
       await this.playRegularSound(audio);
     }
@@ -107,7 +113,7 @@ class Sounds {
     }
   }
 
-  async playEndbossSound(audio) {
+  async fastRepeat(audio) {
     if (!audio.paused) {
       audio.pause();
       audio.currentTime = 0;
