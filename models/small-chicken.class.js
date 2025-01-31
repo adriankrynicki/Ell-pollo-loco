@@ -1,14 +1,23 @@
 class SmallChicken extends MovableObject {
-  y = 370;
+  y = 360;
   height = 60;
   width = 50;
   hp = 5;
   isJumping = false;
   isDeathAnimationPlaying = false;
-  distanceTraveled = 0;
+  animation = null;
   isAnimated = false;
-  walkInterval = null;
-  deathCheckInterval = null;
+  isKilld = false;
+  walkInterval = 100;
+  timeElapsed = 0;
+  distanceTraveled = 0;
+  // Kollisions-Offset für präzisere Hitboxen
+  offset = {
+    top: 5,
+    left: 5,
+    right: 5,
+    bottom: 0,
+  };
 
   IMAGES_WALKING = [
     "img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
@@ -17,102 +26,74 @@ class SmallChicken extends MovableObject {
   ];
   IMAGE_DEAD = "img/3_enemies_chicken/chicken_small/2_dead/dead.png";
 
-  constructor(id) {
+  constructor(id, x, services) {
     super().loadImage("img/3_enemies_chicken/chicken_small/1_walk/1_w.png");
     this.loadImages(this.IMAGES_WALKING);
     this.number = id;
-    this.x = this.getCoordinates(id);
-    this.speed = 10 + Math.random() * 3;
-    this.applayGravity();
+    this.speed = 120 + Math.random() * 20;
+    this.x = x;
+    this.services = services;
   }
 
-  startAnimation() {
-    if (this.walkInterval) {
-      clearInterval(this.walkInterval);
-    }
-    if (this.deathCheckInterval) {
-      clearInterval(this.deathCheckInterval);
-    }
+  initializeAnimation() {
+    // Besserer Name als addAnimation
+    if (!this.isAnimated) {
+      const animation = {
+        update: (deltaTime) => {
+          if (!this.services?.world?.gameState?.gamePaused && !this.isDead()) {
+            this.animateSmallChicken(deltaTime);
+            this.applyGravity(deltaTime);            
+          }
+        },
+      };
 
-    this.walkInterval = setInterval(() => {
-      if (this.isAnimated && !this.isDeathAnimationPlaying) {
-        if (!this.isJumping && !this.isAboveGround()) {
-          this.playAnimation(this.IMAGES_WALKING);
-          this.randomJump();
-          this.isJumping = false;
-        }
-        this.playAnimation(this.IMAGES_WALKING);
-        this.moveLeft();
-      }
-    }, 60);
-
-    this.deathCheckInterval = setInterval(() => {
-      if (this.isDead() && !this.isDeathAnimationPlaying) {
-        clearInterval(this.walkInterval);
-        this.playDeathAnimation();
-      }
-    }, 500);
-  }
-
-  stopAnimation() {
-    if (this.walkInterval) {
-      clearInterval(this.walkInterval);
-      this.walkInterval = null;
-    }
-    if (this.deathCheckInterval) {
-      clearInterval(this.deathCheckInterval);
-      this.deathCheckInterval = null;
+      this.services.animationManager.addAnimation(animation);
+      this.isAnimated = true;
     }
   }
 
-  getCoordinates(id) {
-    let coordinates = [
-      1400, 2100, 2300, 2500, 2700, 2900, 3100, 3500, 4100, 4300, 4400, 4900,
-      5200, 5500, 5600
-    ];
-    let index = id - 1;
-    let startPosition;
+  removeAnimation(animationManager) {
+    if (this.animation) {
+      animationManager.removeAnimation(this.animation);
+      this.animation = null;
+      this.isAnimated = false;
+      this.isKilld = true;
+    }
+  }
 
-    if (index >= 0 && index < coordinates.length) {
-      startPosition = coordinates[index];
+  animateSmallChicken(deltaTime) {
+    if (!this.isDead()) {
+      this.playAnimation(this.IMAGES_WALKING, deltaTime, 20);
+      this.moveLeft(deltaTime);
+      this.otherDirection = false;
+      this.randomJump(deltaTime);
     } else {
-      startPosition = 300;
+      this.playDeathAnimation();
     }
-
-    return startPosition;
   }
 
   playDeathAnimation() {
-    return new Promise((resolve) => {
-      this.speedY = 0;
-      this.isDeathAnimationPlaying = true;
-      this.loadImage(this.IMAGE_DEAD);
-      setTimeout(() => {
-        this.isDeathAnimationPlaying = false;
-        resolve();
-      }, 200);
-    });
+    this.isDeathAnimationPlaying = true;
+    this.loadImage(this.IMAGE_DEAD);
+    setTimeout(() => {
+      this.isDeathAnimationPlaying = false;
+      this.isKilld = true;
+    }, 200);
   }
 
-  randomJump() {
-    this.distanceTraveled += this.speed;
-    if (this.distanceTraveled >= 200 + Math.random() * 100) {
+  randomJump(deltaTime) {
+    this.distanceTraveled += deltaTime;
+    
+    // Wenn das Chicken am Boden ist, Sprung-Status zurücksetzen
+    if (!this.isAboveGround()) {
+      this.isJumping = false;
+    }
+    
+    // Neuen Sprung nur starten wenn nicht in der Luft
+    if (this.distanceTraveled >= 3000 + Math.random() * 30000 && !this.isJumping) {
       this.isJumping = true;
-      this.speedY = -25;
+      this.speedY = -450;
       this.distanceTraveled = 0;
     }
-  }
-
-  getHitbox() {
-    return {
-      x: this.x + this.width * 0.15, // 15% vom Rand
-      y: this.y + this.height * 0.1,
-      width: this.width * 0.7, // 70% der Originalbreite
-      height: this.height * 0.8,
-    };
-  }
-
-  deadSmallChickenSound() {
-    world.sounds.playAudio("small_chicken");
   }
 }
