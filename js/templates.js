@@ -91,7 +91,7 @@ function gameMechanicsHTML() {
           class="icon-bar"
           src="img/7_statusbars/1_statusbar/1_statusbar_coin/green/100.png"
           alt="Coin Bar"
-        />. When full, your health will be restored!
+        />. When full, press "S" to restore your health!
       </p>
       <p class="mechanic-text">
         Defeat the final boss to win the game! Use your
@@ -318,6 +318,16 @@ function responsiveControlsHTML() {
       </button>
     </div>
     <div class="buttons-right-container">
+    <button
+        onmousedown="controls.heal(true)" 
+        onmouseup="controls.heal(false)"
+        ontouchstart="controls.heal(true)"
+        ontouchend="controls.heal(false)"
+        id="heal"
+        class="responsive-button"
+      >
+        Heal
+      </button>
       <button
         onmousedown="controls.throwBottle(true)" 
         onmouseup="controls.throwBottle(false)"
