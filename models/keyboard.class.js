@@ -5,5 +5,6 @@ class Keyboard {
         this.LEFT = false;
         this.RIGHT = false;
         this.D = false;
+        this.S = false;
     }
 }

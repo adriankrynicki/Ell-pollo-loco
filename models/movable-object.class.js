@@ -1,63 +1,100 @@
 class MovableObject extends DrawableObject {
-  speed = 0.15;
-  otherDirection = false;
-  speedY = 0;
-  acceleration = 2.5;
+  // Basis-Bewegungsvariablen
+  speed = 0.15; // Könnte als protected markiert werden, da es eine Basis-Eigenschaft ist
+  speedY = 0; // Vertikale Geschwindigkeit für Sprünge/Fallen
+  acceleration = 900; // Beschleunigung für Gravitation
+  animationFrameTime = 0;
+
+  // Status-Variablen
   hp = 100;
   lastHit = 0;
-  lastEndbossHit = 0;
-  distanceTraveled = 0;
 
-  applayGravity() {
-    setInterval(() => {
-      if (this.isAboveGround() || this.speedY < 0) {
-        this.y += this.speedY;
-        this.speedY += this.acceleration;
+  distanceTraveled = 0;
+  otherDirection = false;
+  lastEndbossHit = 0;
+  /**
+   * Wendet Gravitation auf das Objekt an
+   * @param {number} deltaTime - Verstrichene Zeit seit letztem Frame in ms
+   */
+  applyGravity(deltaTime) {
+    const dt = deltaTime / 1000;
+
+    // Bewegung nur anwenden wenn deltaTime gültig ist
+    if (dt > 0) {
+      // Position aktualisieren
+      this.y += this.speedY * dt;
+
+      // Gravitation anwenden
+      this.speedY += this.acceleration * dt;
+
+      if (this instanceof Character) {
+        if (!this.isAboveGround()) {
+          this.y = 160;
+          this.speedY = 0;
+        }
+      } else if (this instanceof SmallChicken) {
+        if (!this.isAboveGround()) {
+          this.y = 360;
+          this.speedY = 0;
+        }
+      } else if (this instanceof Endboss) {
+        if (!this.isAboveGround()) {
+          this.y = 60;
+          this.speedY = 0;
+        }
       }
-      if (this.y >= 160 && this instanceof Character) {
-        this.y = 160;
-        this.speedY = 0;
-      }
-    }, 40);
+    }
   }
 
+  /**
+   * Prüft ob sich das Objekt in der Luft befindet
+   * @returns {boolean}
+   */
   isAboveGround() {
     if (this instanceof ThrowableBottles) {
       return true;
     } else if (this instanceof Endboss) {
       return this.y < 60;
     } else if (this instanceof SmallChicken) {
-      return this.y < 370;
+      return this.y < 360;
     } else if (this instanceof Character) {
       return this.y < 160;
     }
   }
 
-  Endbosskick() {
-    let Endbosskick = setInterval(() => {
-      this.x -= 4;
+  endbossKick() {
+    let endbossKick = setInterval(() => {
+      this.x -= 35;
     }, 25);
     setTimeout(() => {
-      clearInterval(Endbosskick);
+      clearInterval(endbossKick);
     }, 500);
   }
 
   enemyKick() {
     let enemykick = setInterval(() => {
-      this.x -= 3;
+      this.x -= 7;
     }, 25);
     setTimeout(() => {
       clearInterval(enemykick);
     }, 500);
   }
 
-  moveLeft() {
-    this.x -= this.speed;
+  /**
+   * Bewegt das Objekt horizontal
+   * @param {number} deltaTime - Verstrichene Zeit seit letztem Frame in ms
+   */
+  moveLeft(deltaTime) {
+    this.x -= this.speed * (deltaTime / 1000);
     this.otherDirection = false;
   }
 
-  moveRight() {
-    this.x += this.speed;
+  /**
+   * Bewegt das Objekt horizontal
+   * @param {number} deltaTime - Verstrichene Zeit seit letztem Frame in ms
+   */
+  moveRight(deltaTime) {
+    this.x += this.speed * (deltaTime / 1000);
     this.otherDirection = true;
   }
 
@@ -65,92 +102,42 @@ class MovableObject extends DrawableObject {
     this.speedY = -30;
   }
 
-  playAnimation(images) {
-    let i = this.currentImage % images.length;
-    let path = images[i];
-    this.img = this.imageCach[path];
-    this.currentImage++;
-  }
+  playAnimation(images, deltaTime, frameRate = 60) {
+    this.animationFrameTime += deltaTime;
 
-  getHitbox() {
-    return {
-      x: this.x + this.width * 0.1,
-      y: this.y + this.height * 0.1,
-      width: this.width * 0.8,
-      height: this.height * 0.8
-    };
+    if (this.animationFrameTime >= 1000 / frameRate) {
+      this.animationFrameTime = 0;
+      let i = this.currentImage % images.length;
+      const path = images[i];
+      if (this.imageCach[path]) {
+        this.img = this.imageCach[path];
+      }
+      this.currentImage++;
+    }
   }
 
   isColliding(mo) {
-    let hitboxA = this.getHitbox();
-    let hitboxB = mo.getHitbox();
-
     return (
-      hitboxA.x < hitboxB.x + hitboxB.width &&
-      hitboxA.x + hitboxA.width > hitboxB.x &&
-      hitboxA.y < hitboxB.y + hitboxB.height &&
-      hitboxA.y + hitboxA.height > hitboxB.y
-    );
-  }
-
-  isCollidingWithEndbossAboveGround(mo) {
-    let characterHitbox = this.getHitbox();
-    let endbossHitbox = mo.getHitbox();
-    
-    return (
-      characterHitbox.x < endbossHitbox.x + endbossHitbox.width * 0.8 &&
-      characterHitbox.x + characterHitbox.width > endbossHitbox.x + endbossHitbox.width * 0.2 &&
-      characterHitbox.y + characterHitbox.height > endbossHitbox.y &&
-      characterHitbox.y < endbossHitbox.y + endbossHitbox.height * 0.3
-    );
-  }
-
-  isCollidingWithEndbossOnGround(mo) {
-    let characterHitbox = this.getHitbox();
-    let endbossHitbox = mo.getHitbox();
-    
-    return (
-      characterHitbox.x < endbossHitbox.x + endbossHitbox.width * 0.9 &&
-      characterHitbox.x + characterHitbox.width > endbossHitbox.x + endbossHitbox.width * 0.1 &&
-      characterHitbox.y + characterHitbox.height > endbossHitbox.y + endbossHitbox.height * 0.5
-    );
-  }
-
-  isCollected(mo) {
-    let collectionHitbox = {
-      x: this.x + this.width * 0.3,
-      y: this.y + this.height * 0.3,
-      width: this.width * 0.4,
-      height: this.height * 0.4
-    };
-
-    let itemHitbox = mo.getHitbox();
-
-    return (
-      collectionHitbox.x < itemHitbox.x + itemHitbox.width &&
-      collectionHitbox.x + collectionHitbox.width > itemHitbox.x &&
-      collectionHitbox.y < itemHitbox.y + itemHitbox.height &&
-      collectionHitbox.y + collectionHitbox.height > itemHitbox.y
+      this.x + this.width - this.offset.right > mo.x + mo.offset.left &&
+      this.x + this.offset.left < mo.x + mo.width - mo.offset.right &&
+      this.y + this.height - this.offset.bottom > mo.y + mo.offset.top &&
+      this.y + this.offset.top < mo.y + mo.height - mo.offset.bottom
     );
   }
 
   bottledamage() {
-    this.hp -= 40;
+    this.hp -= 10;
     if (this.hp < 0) {
       this.hp = 0;
     } else {
-      this.lastEndbossHit = new Date().getTime();
+      this.lastHit = new Date().getTime();
     }
   }
 
-  isEndbossHurt() {
-    let timePassd = new Date().getTime() - this.lastEndbossHit;
-    timePassd = timePassd / 1000;
-    return timePassd < 0.3;
-  }
 
-  hit() {
-    this.hp -= 20;
+
+  hit(damage) {
+    this.hp -= damage;
     if (this.hp < 0) {
       this.hp = 0;
     } else {
@@ -161,10 +148,10 @@ class MovableObject extends DrawableObject {
   isHurt() {
     let timePassd = new Date().getTime() - this.lastHit;
     timePassd = timePassd / 1000;
-    return timePassd < 1.5;
+    return timePassd < 0.3;
   }
 
   isDead() {
-    return this.hp == 0;
+    return this.hp <= 0;
   }
 }
