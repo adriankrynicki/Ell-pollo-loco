@@ -1,17 +1,24 @@
 class ScreenManager {
-  constructor(canvas, ctx) {
-    this.canvas = canvas;
-    this.ctx = ctx;
+  constructor(services) {
+    this.services = services;
+    this.canvas = services.canvas;
+    this.ctx = services.ctx;
     this.winImage = new Image();
     this.loseImage = new Image();
     this.winImage.src = "img/9_intro_outro_screens/win/won_2.png";
     this.loseImage.src = "img/9_intro_outro_screens/game_over/game over.png";
   }
 
-  drawEndScreen(gameWon) {
-    if (gameWon) {
+  drawEndScreen() {
+    if (
+      !this.services.world.gameState.gameWon &&
+      !this.services.world.gameState.gameLost
+    )
+      return;
+
+    if (this.services.world?.gameState?.gameWon) {
       this.drawWinScreen();
-    } else {
+    } else if (this.services.world?.gameState?.gameLost) {
       this.drawGameOverScreen();
     }
   }
