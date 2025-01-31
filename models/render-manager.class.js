@@ -1,215 +1,157 @@
 class RenderManager {
-  constructor(canvas, ctx, world) {
-    this.canvas = canvas;
-    this.ctx = ctx;
-    this.world = world;
-    this.endbossActivated = false;
-    this.lastFrameTime = 0;
-    this.frameInterval = 1000 / 60;
+  // Class Fields
+  canvas;
+  ctx;
+  world;
+  endbossActivated = false;
+  lastFrameTime = 0;
+  frameInterval = 1000 / 60; // Zielwert für 60 FPS
+  animationManager;
+  level;
+  drawer;
+
+  constructor(services) {
+    // Nur Basis-Services im Constructor
+    this.canvas = services.canvas;
+    this.ctx = services.ctx;
+    this.world = services.world;
+    this.animationManager = services.animationManager;
+    this.services = services;
+
+    // Referenzobjekt für Zeichenmethoden
+    this.drawer = new MovableObject(); // oder new DrawableObject()
+    this.drawer.ctx = this.ctx; // ctx setzen
   }
 
-  clearCanvas() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-  }
+  initialize(level) {
+    this.services.world.level = level;
 
-  renderWithTranslation(callback, camera_x) {
-    this.ctx.translate(camera_x, 0);
-    callback();
-    this.ctx.translate(-camera_x, 0);
-  }
-
-  renderBackground(level, camera_x) {
-    if (!level) return;
-    this.renderWithTranslation(() => {
-      const objectGroups = [
-        { items: level.backgroundObject, name: "background" },
-        { items: level.clouds, name: "clouds" },
-      ];
-      this.renderObjects(objectGroups, camera_x);
-    }, camera_x);
-  }
-
-  renderGameObjects(level, character, camera_x, bottleThrowManager) {
-    if (!level) return;
-    
-    this.renderWithTranslation(() => {
-        this.renderCollectableObjects(level, camera_x);
-        this.renderMovableObjects(character, level, bottleThrowManager);
-    }, camera_x);
-  }
-
-  renderCollectableObjects(level, camera_x) {
-    const viewport = this.getViewport(camera_x);
-    const objectGroups = [
-      { 
-        items: level.collectableCoins,
-        name: "coins",
-        batchSize: 10
+    // Animation erst nach Level-Initialisierung hinzufügen
+    this.animationManager.addAnimation({
+      update: (deltaTime) => {
+        if (
+          this.services.world.level &&
+          !this.services.world.gameState.gamePaused
+        ) {
+          this.render();
+        }
       },
-      { 
-        items: level.collectableBottles,
-        name: "bottles",
-        batchSize: 5
+    });
+  }
+
+  render() {
+    if (!this.services.world.level) return;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.translate(this.world.camera_x, 0);
+    this.drawBackground();
+    this.drawClouds();
+    this.drawCollectableObjects();
+    this.drawEnemies();
+    this.drawThrowableBottles();
+    this.drawCharacter();
+    this.ctx.translate(-this.world.camera_x, 0);
+    this.drawStatusBars();
+    this.services.screenManager.drawEndScreen();
+  }
+
+  drawBackground() {
+    if (this.services.world.level?.backgroundObjects) {
+      this.drawer.addObjectToMap(this.services.world.level.backgroundObjects);
+    }
+  }
+
+  drawClouds() {
+    if (!this.services.world?.level) return;
+
+    // Initialisiere nicht-animierte Clouds
+    this.services.world.level.clouds.forEach((cloud) => {
+      if (!cloud.isAnimated) {
+        cloud.initialize();
       }
-    ];
-    
-    objectGroups.forEach(({ items, name, batchSize }) => {
-      const visibleItems = this.filterVisibleObjects(items, viewport);
-      this.batchRenderObjects(visibleItems, batchSize);
     });
+
+    // Zeichne alle Clouds mit der vorhandenen Methode
+    this.drawer.addObjectToMap(this.services.world.level.clouds);
   }
 
-  batchRenderObjects(objects, batchSize) {
-    for (let i = 0; i < objects.length; i += batchSize) {
-      const batch = objects.slice(i, i + batchSize);
-      this.ctx.save();
-      batch.forEach(obj => this.addToMap(obj));
-      this.ctx.restore();
+  drawThrowableBottles() {
+    if (!this.services?.bottleThrowManager?.throwableBottles) return;
+
+    for (const [id, bottle] of this.services.bottleThrowManager
+      .throwableBottles) {
+      this.drawer.addToMap(bottle);
     }
   }
 
-  renderMovableObjects(character, level, bottleThrowManager) {
-    this.addToMap(character);
-    this.drawEnemies(level, character);
-    bottleThrowManager.drawBottles();
-  }
-
-  renderObjects(objectGroups, camera_x) {
-    const viewport = this.getViewport(camera_x);
-    objectGroups.forEach(({ items, name }) => {
-      const visibleItems = this.filterVisibleObjects(items, viewport);
-      this.addObjectToMap(visibleItems);
-    });
-  }
-
-  getViewport(camera_x) {
-    return {
-      start: -camera_x - 719,
-      end: -camera_x + this.canvas.width + 719,
-    };
-  }
-
-  renderStatusBars(bars) {
-    bars.forEach((bar) => this.addToMap(bar));
-  }
-
-  filterVisibleObjects(objects, viewport) {
-    return objects.filter(
-      (obj) => obj.x >= viewport.start && obj.x <= viewport.end
-    );
-  }
-
-  addObjectToMap(objects) {
-    objects.forEach((obj) => this.addToMap(obj));
-  }
-
-  addToMap(mo) {
-    if (mo.otherDirection) {
-      this.flipImage(mo);
-    }
-
-    mo.draw(this.ctx);
-
-    if (mo.otherDirection) {
-      this.flipImageBack(mo);
+  drawCharacter() {
+    if (this.services?.character) {
+      this.drawer.addToMap(this.services.character);
     }
   }
 
-  flipImage(mo) {
-    this.ctx.save();
-    this.ctx.translate(mo.width, 0);
-    this.ctx.scale(-1, 1);
-    mo.x = mo.x * -1;
+  drawCollectableObjects() {
+    if (
+      this.services.world.level?.collectableCoins &&
+      this.services.world.level?.collectableBottles
+    ) {
+      const collectables = [
+        ...this.services.world.level.collectableCoins,
+        ...this.services.world.level.collectableBottles,
+      ];
+
+      this.drawer.addObjectToMap(collectables);
+    }
   }
 
-  flipImageBack(mo) {
-    mo.x = mo.x * -1;
-    this.ctx.restore();
+  drawStatusBars() {
+    const { character, statusBars, endbossHpBar } = this.services;
+
+    if (!statusBars) return;
+
+    if (character?.x > 19300) {
+      character.isInBossArea = true;
+    }
+
+    if (character.isInBossArea && endbossHpBar) {
+      endbossHpBar.draw(this.ctx);
+    }
+
+    statusBars?.character?.draw(this.ctx);
+    statusBars?.bottle?.draw(this.ctx);
+    statusBars?.coin?.draw(this.ctx);
   }
 
-  drawEnemies(level, character) {
-    const viewportStart = character.x - 200;
-    const viewportEnd = character.x + 720;
-    
-    this.handleEnemiesVisibility(
-        level.enemies,
-        character,
-        viewportStart,
-        viewportEnd
-    );
-    
-    const activeEnemies = level.enemies.filter(enemy => 
-        enemy.isAnimated && 
-        enemy.x >= viewportStart && 
-        enemy.x <= viewportEnd
-    );
+  drawEnemies() {
+    if (!this.services.world.level?.enemies || !this.services?.character)
+      return;
 
-    this.batchRenderObjects(activeEnemies, 3);
-  }
+    this.services.world.level.enemies.filter((enemy) => {
+      if (!enemy) return;
+      let endboss = enemy instanceof Endboss;
+      let characterX = this.services.character.x;
+      let distance = enemy.x - characterX;
 
-  handleEnemiesVisibility(enemies, character, viewportStart, viewportEnd) {
-    enemies.forEach((enemy) => {
-      this.updateEnemyVisibility(enemy, character, viewportStart, viewportEnd);
-      this.updateEnemyAnimation(enemy);
-    });
-  }
-
-  updateEnemyVisibility(enemy, character, viewportStart, viewportEnd) {
-    if (enemy instanceof Endboss) {
-      if (character.x >= 4800) {
-        this.endbossActivated = true;
+      if (!enemy.isAnimated && !enemy.isKilld && Math.abs(distance) < 720) {
+        enemy.initializeAnimation();
+      } else if (!endboss && enemy.isKilld) {
+        this.animationManager.removeAnimation(enemy.animation);
+        this.removeFromMap(enemy);
+      } else if (!endboss && enemy.x <= -300) {
+        this.animationManager.removeAnimation(enemy.animation);
+        this.removeFromMap(enemy);
       }
-      enemy.isAnimated = this.endbossActivated;
-    } else {
-      enemy.isAnimated =
-        this.world.gameLost ||
-        (enemy.x >= viewportStart && enemy.x <= viewportEnd);
-    }
+      if (!enemy.isKilld) {
+        this.drawer.addToMap(enemy);
+      }
+    });
   }
 
-  updateEnemyAnimation(enemy) {
-    if (this.shouldStartAnimation(enemy)) {
-      this.startEnemyAnimation(enemy);
-    } else if (this.shouldStopAnimation(enemy)) {
-      this.stopEnemyAnimation(enemy);
-    } else if (this.shouldHandleGameWon(enemy)) {
-      this.handleGameWonAnimation(enemy);
-    }
-  }
-
-  shouldStartAnimation(enemy) {
-    return (
-      enemy.isAnimated && !enemy.isCurrentlyAnimated && !this.world.gameLost
-    );
-  }
-
-  shouldStopAnimation(enemy) {
-    return (
-      (!enemy.isAnimated || this.world.gameLost) && enemy.isCurrentlyAnimated
-    );
-  }
-
-  shouldHandleGameWon(enemy) {
-    return this.world.gameWon && enemy.isCurrentlyAnimated;
-  }
-
-  startEnemyAnimation(enemy) {
-    enemy.startAnimation();
-    enemy.isCurrentlyAnimated = true;
-  }
-
-  stopEnemyAnimation(enemy) {
-    enemy.stopAnimation();
-    enemy.isCurrentlyAnimated = false;
-  }
-
-  handleGameWonAnimation(enemy) {
-    if (enemy instanceof Endboss) {
-      setTimeout(() => {
-        this.stopEnemyAnimation(enemy);
-      }, 1000);
-    } else {
-      this.stopEnemyAnimation(enemy);
+  removeFromMap(enemy) {
+    const index = this.services.world.level.enemies.indexOf(enemy);
+    if (index !== -1) {
+      this.services.world.level.enemies.splice(index, 1);
     }
   }
 }
