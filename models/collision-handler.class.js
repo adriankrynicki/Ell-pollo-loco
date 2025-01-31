@@ -1,191 +1,295 @@
+/**
+ * Handles all collision detection and resolution in the game.
+ * @class
+ */
 class CollisionHandler {
-  constructor(world) {
-    this.world = world;
-    this.onAnEnemy = false;
-    this.damageImmune = false;
-    this.damageImmuneTimer = 0;
+  // State Management
+  onAnEnemy = false;
+  damageImmune = false;
+  canMoveRight = true;
+
+  /** @type {Object} Defines collision detection ranges */
+  collisionRanges = {
+    horizontal: 300,
+    vertical: 370,
+  };
+
+  constructor(services) {
+    this.services = services;
+    this.canvas = services.canvas;
+    this.ctx = services.ctx;
+    this.world = services.world;
+    this.keyboard = services.keyboard;
+    this.sounds = services.sounds;
+    this.animationManager = services.animationManager;
   }
 
-  get character() {
-    return this.world.character;
+  initialize(level) {
+    this.services.world.level = level;
+
+    // Animation erst nach Level-Initialisierung hinzufügen
+    this.animationManager.addAnimation({
+      update: (deltaTime) => {
+        if (
+          this.services.world.level &&
+          !this.services.world.gameState.gamePaused &&
+          !this.services.character.hp <= 0
+        ) {
+          this.checkCollisionsWithEnemies();
+          this.checkEnemyJumpState();
+          this.checkIfBottleHit();
+        }
+      },
+    });
   }
 
-  get endboss() {
-    return this.world.level.enemies.find(
-      (e) => e.constructor.name === "Endboss"
-    );
-  }
-
-  get chicken() {
-    return this.world.level.enemies.filter(
-      (e) => e.constructor.name === "Chicken"
-    );
-  }
-
-  get smallChicken() {
-    return this.world.level.enemies.filter(
-      (e) => e.constructor.name === "SmallChicken"
-    );
-  }
-
-  get characterHPBar() {
-    return this.world.characterHPBar;
-  }
-
-  get endbossHpBar() {
-    return this.world.endbossHpBar;
-  }
-
+  /**
+   * Checks and handles all possible collisions with enemies.
+   * Uses spatial partitioning for performance optimization.
+   */
   checkCollisionsWithEnemies() {
-    if (this.endboss) {
-      this.handleCollisionsWithEndboss(this.endboss);
-    }
+    if (!this.world.level?.enemies) return; // Early return wenn keine enemies
 
-    this.chicken.forEach((chicken) => {
-      this.handleCollisionsWithChicken(chicken);
+    const enemies = this.world.level.enemies;
+
+    enemies.forEach((enemy) => {
+      if (!this.isObjectInCollisionRange(this.services.character, enemy))
+        return;
+
+      let isEndboss = enemy.constructor.name === "Endboss";
+      let isAboveGround = this.services.character.isAboveGround();
+
+      this.handleCollisions(enemy, isAboveGround, isEndboss);
     });
-
-    this.smallChicken.forEach((smallChicken) => {
-      this.handleCollisionsWithSmallChicken(smallChicken);
-    });
   }
 
-  handleJumpOnChicken() {
-    const collidingChicken = this.chicken.find(
-      (chicken) =>
-        this.character.isColliding(chicken) &&
-        this.character.isAboveGround() &&
-        this.character.speedY > 0
+  handleCollisions(enemy, isAboveGround, isEndboss) {
+    if (isAboveGround) {
+      if (isEndboss && this.services.character.isColliding(enemy)) {
+        this.handleEndbossCollision(enemy);
+      } else if (
+        this.services.character.isColliding(enemy) &&
+        !this.onAnEnemy
+      ) {
+        if (this.services.character.speedY <= 0) {
+          this.handleGroundCollision(enemy, isEndboss);
+        } else {
+          this.handleJumpOnEnemy(enemy);
+        }
+      }
+    } else {
+      this.handleGroundCollision(enemy, isEndboss);
+    }
+  }
+
+  /**
+   * Checks if two objects are within both horizontal and vertical range.
+   * @param {GameObject} character - First game object
+   * @param {GameObject} enemy - Second game object
+   * @returns {boolean} True if objects are within range
+   * @private
+   */
+  isObjectInCollisionRange(character, enemy) {
+    let { horizontal, vertical } = this.collisionRanges;
+
+    let isInHorizontalRange = this.isObjectInHorizontalRange(
+      character,
+      enemy,
+      horizontal
     );
+    if (!isInHorizontalRange) return false;
 
-    if (collidingChicken) {
-      this.handleChickenCollision(collidingChicken);
+    let verticalDistance = Math.abs(character.y - enemy.y);
+    return verticalDistance < vertical;
+  }
+
+  /**
+   * Checks if two objects are within horizontal range.
+   * @param {GameObject} character - First game object
+   * @param {GameObject} enemy - Second game object
+   * @param {number} range - Maximum horizontal distance
+   * @returns {boolean} True if objects are within range
+   * @private
+   */
+  isObjectInHorizontalRange(character, enemy, range) {
+    let horizontalDistance = Math.abs(character.x - enemy.x);
+    return horizontalDistance < range;
+  }
+
+  /**
+   * Checks if two objects are within a specified range of each other.
+   * @param {GameObject} character - First game object
+   * @param {GameObject} enemy - Second game object
+   * @param {number} [range=200] - Maximum distance between objects
+   * @returns {boolean} True if objects are within range
+   */
+  isInRange(character, enemy, range = 200) {
+    let horizontalDistance = character.x - enemy.x;
+    if (Math.abs(horizontalDistance) > range) return false;
+    let verticalDistance = character.y - enemy.y;
+    return Math.abs(verticalDistance) < range;
+  }
+
+  handleEndbossCollision(enemy) {
+    if (this.damageImmune || !this.services.character.isColliding(enemy))
+      return;
+
+    this.applyEnemyCollisionEffects(enemy);
+    this.services.character.endbossKick();
+    this.updateCameraAfterKick();
+  }
+
+  handleJumpOnEnemy(enemy) {
+    let isChicken = enemy.constructor.name === "Chicken";
+    let isSmallChicken = enemy.constructor.name === "SmallChicken";
+    if (isChicken && this.services.character.speedY >= 0) {
+      this.activateJumpOnChicken(enemy);
+      enemy.playDeathAnimation();
+      this.sounds.playAudio("chicken_dead");
+    } else if (isSmallChicken && this.services.character.speedY >= 0) {
+      this.activateJumpOnChicken(enemy);
+      enemy.playDeathAnimation();
+      this.sounds.playAudio("small_chicken_dead");
     }
   }
 
-  handleJumpOnSmallChicken() {
-    const collidingSmallChicken = this.smallChicken.find(
-      (smallChicken) =>
-        this.character.isColliding(smallChicken) &&
-        this.character.isAboveGround() &&
-        this.character.speedY > 0
-    );
+  activateJumpOnChicken(enemy) {
+    this.onAnEnemy = true;
+    enemy.hit(20);
+    this.services.character.currentImage = 1;
+    this.services.character.speedY = -310;
+  }
 
-    if (collidingSmallChicken) {
-      this.handleSmallChickenCollision(collidingSmallChicken);
+  /**
+   * Resets the enemy jump state when character touches ground.
+   * @private
+   */
+  checkEnemyJumpState() {
+    if (this.onAnEnemy && !this.services.character.isAboveGround()) {
+      this.onAnEnemy = false;
     }
   }
 
-  handleCollisionsWithEndboss(endboss) {
-    if (
-      this.character.isColliding(endboss) &&
-      !this.character.isAboveGround() &&
-      !this.damageImmune
-    ) {
-      this.handleEndbossCollisionOnGround(endboss);
-    } else if (
-      this.character.isCollidingWithEndbossAboveGround(endboss) &&
-      this.character.isAboveGround() &&
-      !this.damageImmune
-    ) {
-      this.handleEndbossCollisionAboveGround();
+  handleGroundCollision(enemy, isEndboss) {
+    if (this.damageImmune || !this.services.character.isColliding(enemy))
+      return;
+
+    if (this.services.character.isColliding(enemy)) {
+      this.applyEnemyCollisionEffects(enemy, isEndboss);
+      if (isEndboss) {
+        this.services.character.endbossKick();
+        this.updateCameraAfterKick();
+      } else {
+        this.services.character.enemyKick();
+        this.updateCameraAfterKick();
+      }
     }
   }
 
-  handleCollisionsWithChicken(chicken) {
-    if (
-      this.character.isColliding(chicken) &&
-      !this.character.isAboveGround() &&
-      !this.damageImmune
-    ) {
-      this.applyEnemyCollisionEffects();
-    }
-  }
+  updateCameraAfterKick() {
+    let cameraInterval = setInterval(() => {
+      this.services.character.updateCameraPosition();
+    }, 5);
 
-  handleCollisionsWithSmallChicken(smallChicken) {
-    if (
-      this.character.isColliding(smallChicken) &&
-      !this.character.isAboveGround() &&
-      !this.damageImmune
-    ) {
-      this.applyEnemyCollisionEffects();
-    }
-  }
-
-  handleEndbossCollisionOnGround(endboss) {
-    if (this.character.isCollidingWithEndbossOnGround(endboss)) {
-      this.world.canMoveRight = false;
-      this.character.hit();
-      this.character.Endbosskick();
-      this.character.characterHurtSound();
-      this.characterHPBar.setPercentage(this.character.hp);
-      setTimeout(() => {
-        this.world.canMoveRight = true;
-      }, 1000);
-    }
-  }
-
-  handleEndbossCollisionAboveGround() {
-    this.world.canMoveRight = false;
-    this.character.Endbosskick();
     setTimeout(() => {
-      this.world.canMoveRight = true;
-    }, 1000);
-    this.character.hit();
-    this.characterHPBar.setPercentage(this.character.hp);
-    this.character.characterHurtSound();
+      clearInterval(cameraInterval);
+    }, 500);
   }
 
-  handleChickenCollision(chicken) {
-    if (!this.onAnEnemy) {
-      this.onAnEnemy = true;
-      chicken.hit();
-      chicken.deadChickenSound();
-      this.character.performShortJump();
-      this.character.jumpSound();
-      this.deleteChicken(chicken);
+  /**
+   * Applies standard effects when character collides with an enemy.
+   */
+  applyEnemyCollisionEffects(enemy, isEndboss) {
+    if (isEndboss) {
+      this.services.character.hit(50);
+    } else {
+      this.services.character.hit(20);
     }
-  }
 
-  handleSmallChickenCollision(smallChicken) {
-    if (!this.onAnEnemy) {
-      this.onAnEnemy = true;
-      smallChicken.hit();
-      smallChicken.deadSmallChickenSound();
-      this.character.performShortJump();
-      this.character.jumpSound();
-      this.deleteChicken(smallChicken);
-    }
-  }
-
-  applyEnemyCollisionEffects() {
     this.damageImmune = true;
-    this.world.canMoveRight = false;
-    this.character.enemyKick();
-    this.character.hit();
-    this.characterHPBar.setPercentage(this.character.hp);
-    this.character.characterHurtSound();
+    this.canMoveRight = false;
+    this.world.statusBars.character.setPercentage(this.services.character.hp);
+    this.sounds.playAudio("character_hurt");
 
     setTimeout(() => {
-      this.world.canMoveRight = true;
-      if (!this.world.characterIsDead) {
+      this.canMoveRight = true;
+      if (
+        !this.services.character.characterIsDead &&
+        !(isEndboss && enemy.endbossIsDead)
+      ) {
         this.damageImmune = false;
       }
     }, 1000);
   }
 
-  async deleteChicken(enemy) {
-    await enemy.playDeathAnimation();
+  checkIfBottleHit() {
+    if (!this.services.bottleThrowManager.throwableBottles) return;
 
-    if (enemy.constructor.name === "Chicken") {
-      this.world.level.enemies = this.world.level.enemies.filter(
-        (e) => e !== enemy
-      );
-    } else if (enemy.constructor.name === "SmallChicken") {
-      this.world.level.enemies = this.world.level.enemies.filter(
-        (e) => e !== enemy
-      );
+    this.services.bottleThrowManager.throwableBottles.forEach(
+      (bottle, bottleId) => {
+        this.checkBottleCollisionWithEnemies(bottle, bottleId);
+        this.checkBottleCollisionWithGround(bottle, bottleId);
+      }
+    );
+  }
+
+  checkBottleCollisionWithEnemies(bottle, bottleId) {
+    for (
+      let enemyIndex = this.world.level.enemies.length - 1;
+      enemyIndex >= 0;
+      enemyIndex--
+    ) {
+      let enemy = this.world.level.enemies[enemyIndex];
+      if (!bottle.collided && bottle.isColliding(enemy)) {
+        this.handleBottleEnemyCollision(bottle, bottleId, enemy);
+      }
     }
-    this.world.draw();
+  }
+
+  checkBottleCollisionWithGround(bottle, bottleIndex) {
+    if (!bottle.collided && bottle.y > 340) {
+      this.handleBottleCollision(bottle, bottleIndex);
+    }
+  }
+
+  handleBottleEnemyCollision(bottle, bottleId, enemy) {
+    this.handleBottleCollision(bottle, bottleId);
+    enemy.bottledamage();
+    this.playEnemySound(enemy);
+    this.handleEnemyAfterCollision(enemy);
+  }
+
+  handleBottleCollision(bottle, bottleId) {
+    bottle.collided = true;
+    bottle.speedY = 0;
+    bottle.acceleration = 0;
+    this.sounds.playAudio("bottle_splash");
+    bottle.onSplashComplete = () => this.removeBottle(bottleId);
+  }
+
+  playEnemySound(enemy) {
+    if (enemy instanceof Chicken) {
+      this.sounds.playAudio("chicken_dead");
+    } else if (enemy instanceof SmallChicken) {
+      this.sounds.playAudio("small_chicken_dead");
+    } else if (enemy instanceof Endboss) {
+      if (enemy.hp <= 0) {
+        this.sounds.playAudio("endboss_dead");
+      } else {
+        this.sounds.playAudio("endboss_hurt");
+      }
+    }
+  }
+
+  removeBottle(bottleId) {
+    this.services.bottleThrowManager.throwableBottles.delete(bottleId);
+  }
+
+  handleEnemyAfterCollision(enemy) {
+    if (enemy instanceof Chicken || enemy instanceof SmallChicken) {
+      enemy.playDeathAnimation();
+    } else if (enemy instanceof Endboss) {
+      this.services.endbossHpBar.setPercentage(enemy.hp);
+    }
   }
 }
