@@ -2,9 +2,20 @@ class Endboss extends MovableObject {
   height = 400;
   width = 250;
   y = 60;
-  acceleration = 10;
-  speed = 80;
+  speed = 580;
   isAttacking = false;
+  isAnimated = false;
+  distanceTraveled = 0;
+  endbossIsDead = false;
+  animation = null;
+
+  // Kollisions-Offset für präzisere Hitboxen
+  offset = {
+    top: 90,
+    left: 40,
+    right: 20,
+    bottom: 20,
+  };
   IMAGES_WALKING = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
     "img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -42,72 +53,68 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
-  lastStateUpdate = 0;
-  animationInterval = 1000; // Zeit in Millisekunden zwischen den Frames
-  animationFrameId = null;
-
-  animations = [
+  endbossStates = [
     {
       condition: () => this.isDead(),
-      state: 'dead',
-      images: this.IMAGES_DEAD,
-      interval: 200,
-      action: () => {} // Keine Aktion wenn tot
+      execute: (deltaTime) => {
+        this.playAnimation(this.IMAGES_DEAD, deltaTime, 10);
+        this.speed = 0;
+      },
     },
     {
-      condition: () => this.isEndbossHurt(),
-      state: 'hurt',
-      images: this.IMAGES_HURT,
-      interval: 150,
-      action: () => {} // Keine Aktion wenn verletzt
+      condition: () => this.isHurt(),
+      execute: (deltaTime) => {
+        this.playAnimation(this.IMAGES_HURT, deltaTime, 10);
+      },
     },
     {
       condition: () => this.isAttacking,
-      state: 'attack',
-      images: this.IMAGES_ATTACK,
-      interval: 200,
-      action: () => {
-        if (!this.isAboveGround()) {
-          this.speedY = -40;
+      execute: (deltaTime) => {
+        if (!this.isJumping) {
+          this.speedY = -100;
+          setTimeout(() => {
+            this.isJumping = true;
+          }, 800);
         }
-        setTimeout(() => {
+        this.moveLeft(deltaTime);
+        this.playAnimation(this.IMAGES_ATTACK, deltaTime, 10);
+        if (!this.isAboveGround() && this.isJumping) {
           this.isAttacking = false;
-        }, 1000);
-      }
+          this.speedY = 0;
+          this.isJumping = false;
+        }
+      },
+      sound: "endboss_attack",
     },
     {
-      condition: () => this.hp < 90,
-      state: 'walking',
-      images: this.IMAGES_WALKING,
-      interval: 200,
-      action: () => {
-        this.moveLeft();
+      condition: () => this.hp < 95 && !this.isAttacking,
+      execute: (deltaTime) => {
+        this.playAnimation(this.IMAGES_WALKING, deltaTime, 10);
+        this.moveLeft(deltaTime);
         this.OtherDirection = false;
         this.distanceTraveled += this.speed;
-        if (this.distanceTraveled >= 100) {
+        if (this.distanceTraveled >= 60000) {
           this.isAttacking = true;
           this.distanceTraveled = 0;
         }
-      }
+      },
+      sound: "endboss_walking",
     },
     {
-      condition: () => true,
-      state: 'alert',
-      images: this.IMAGES_ALERT,
-      interval: 200,
-      action: () => {} // Keine Aktion im Alert-Zustand
-    }
+      condition: () => this.isAnimated && this.hp == 100,
+      execute: (deltaTime) => {
+        this.playAnimation(this.IMAGES_ALERT, deltaTime, 5);
+      },
+    },
   ];
 
-  constructor(number, isAnimated) {
+  constructor(number, services) {
     super().loadImage(this.IMAGES_ALERT[0]);
     this.endbossImages();
-    this.applayGravity();
-    this.isAnimated = isAnimated;
-    this.animationInterval = null;
 
     this.number = number;
-    this.x = 5500;
+    this.x = 20000;
+    this.services = services;
   }
 
   endbossImages() {
@@ -123,46 +130,45 @@ class Endboss extends MovableObject {
     });
   }
 
-  handleAnimationStates() {
-    const currentTime = performance.now();
-    const animation = this.animations.find(a => a.condition());
+  initializeAnimation() {
+    if (!this.isAnimated) {
+      const animation = {
+        update: (deltaTime) => {
+          if (!this.services?.world?.gameState?.gamePaused) {
+            this.handleEndbossState(deltaTime);
+            this.applyGravity(deltaTime);
+          }
+        },
+      };
 
-    if (!this.lastStateUpdate || 
-      currentTime - this.lastStateUpdate >= animation.interval) {
-      this.playAnimation(animation.images);
-      animation.action(); // Führe die zugehörige Aktion aus
-      this.lastStateUpdate = currentTime;
+      this.animation = animation;
+      this.services.animationManager.addAnimation(animation);
+      this.isAnimated = true;
     }
   }
 
-  startAnimation() {
-    this.stopAnimation();
+  handleEndbossState(deltaTime) {
+    let activeState = this.endbossStates.find((state) => state.condition());
 
-    const animate = () => {
-      this.handleAnimationStates();
-      this.animationFrameId = requestAnimationFrame(animate);
-    };
-    
-    this.animationFrameId = requestAnimationFrame(animate);
-  }
+    this.pauseFlyingSound();
+    this.pauseWalkingSound();
 
-  stopAnimation() {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+    activeState.execute(deltaTime);
+
+    if (activeState.sound) {
+      this.services.sounds.playAudio(activeState.sound);
     }
   }
 
-  endbossHurtSound() {
-    world.sounds.playAudio("endboss");
+  pauseFlyingSound() {
+    if (!this.isAboveGround()) {
+      this.services.sounds.pauseAudio("endboss_attack");
+    }
   }
 
-  getHitbox() {
-    return {
-      x: this.x + this.width * 0.15,  // 15% vom Rand
-      y: this.y + this.height * 0.1,
-      width: this.width * 0.7,   // 70% der Originalbreite
-      height: this.height * 0.8
-    };
+  pauseWalkingSound() {
+    if (this.isAboveGround() || this.isDead() || this.isHurt()) {
+      this.services.sounds.pauseAudio("endboss_walking");
+    }
   }
 }
