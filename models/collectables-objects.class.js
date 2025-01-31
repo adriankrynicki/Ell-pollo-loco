@@ -3,58 +3,59 @@
  * @class
  */
 class CollectablesObjects {
+  collectedBottles = 0;
+  collectedCoins = 0;
+  hasReachedBottleThreshold = false;
+  hasReachedCoinThreshold = false;
+
+  firstBottleCollected = true;
   /** @type {Object} Defines collection detection ranges */
   static COLLECTION_RANGES = {
     HORIZONTAL: 200,
   };
 
-  /**
-   * Creates a new collectables handler instance.
-   * @param {World} world - The game world instance
-   */
-  constructor(world) {
-    this.world = world;
-    this.coinsCollected = 0;
+  constructor(services) {
+    this.services = services;
+    this.animationManager = services.animationManager;
   }
 
-  // Getter methods
-  get character() {
-    return this.world.character;
-  }
-  get level() {
-    return this.world.level;
-  }
-  get bottleThrowManager() {
-    return this.world.bottleThrowManager;
-  }
-  get bottleStatusbar() {
-    return this.world.bottleStatusbar;
-  }
-  get characterHPBar() {
-    return this.world.characterHPBar;
-  }
-  get sounds() {
-    return this.world.sounds;
-  }
-  get coinStatusBar() {
-    return this.world.coinStatusBar;
+  initialize(level) {
+    this.services.world.level = level;
+
+    // Animationen erst nach Level-Initialisierung hinzufügen
+    this.animationManager.addAnimation({
+      update: (deltaTime) => {
+        if (
+          this.services.world.level &&
+          !this.services.world.gameState.gamePaused
+        ) {
+          this.checkCollectedBottles();
+          this.checkCollectedCoins();
+          this._checkHealthRestore();
+          this.checkBottleThreshold();
+        }
+      },
+    });
   }
 
   /**
    * Checks and handles collection of bottles within range of the character.
    */
   checkCollectedBottles() {
-    if (!this._areCollectablesAvailable("collectableBottles")) return;
-
-    const nearbyBottles = this._getNearbyCollectables(
-      this.level.collectableBottles
-    );
-
-    nearbyBottles.forEach((bottle) => {
-      if (this.character.isColliding(bottle)) {
-        this._handleBottleCollection(bottle);
-      }
-    });
+    if (
+      this.services.world.level &&
+      this.services.world.level.collectableBottles
+    ) {
+      this.services.world.level.collectableBottles.forEach((bottle) => {
+        if (
+          this.services.character.isColliding(bottle) &&
+          !bottle.isCollected &&
+          !this.hasReachedBottleThreshold
+        ) {
+          this._handleBottleCollection(bottle);
+        }
+      });
+    }
   }
 
   /**
@@ -63,12 +64,13 @@ class CollectablesObjects {
   checkCollectedCoins() {
     if (!this._areCollectablesAvailable("collectableCoins")) return;
 
-    const nearbyCoins = this._getNearbyCollectables(
-      this.level.collectableCoins
-    );
-
-    nearbyCoins.forEach((coin) => {
-      if (this.character.isCollected(coin)) {
+    this.services.world.level.collectableCoins.forEach((coin) => {
+      if (
+        this.services.character.isColliding(coin) &&
+        !coin.isCollected &&
+        !this.hasReachedCoinThreshold
+      ) {
+        coin.isCollected = true;
         this._handleCoinCollection(coin);
       }
     });
@@ -81,31 +83,9 @@ class CollectablesObjects {
    * @private
    */
   _areCollectablesAvailable(collectableType) {
-    return this.level && this.level[collectableType];
-  }
-
-  /**
-   * Filters collectables that are within collection range of the character.
-   * @param {Array} collectables - Array of collectable objects
-   * @returns {Array} Collectables within range
-   * @private
-   */
-  _getNearbyCollectables(collectables) {
-    return collectables.filter((collectable) =>
-      this._isInCollectionRange(this.character, collectable)
+    return (
+      this.services.world.level && this.services.world.level[collectableType]
     );
-  }
-
-  /**
-   * Checks if an object is within collection range of the character.
-   * @param {GameObject} obj1 - First game object (usually the character)
-   * @param {GameObject} obj2 - Second game object (the collectable)
-   * @returns {boolean} True if objects are within range
-   * @private
-   */
-  _isInCollectionRange(obj1, obj2) {
-    const distance = Math.abs(obj1.x - obj2.x);
-    return distance <= CollectablesObjects.COLLECTION_RANGES.HORIZONTAL;
   }
 
   /**
@@ -114,12 +94,14 @@ class CollectablesObjects {
    * @private
    */
   _handleBottleCollection(bottle) {
-    this.bottleThrowManager.bottleCollected++;
-    bottle.bottleCollectSound();
-    this.deleteBottle(bottle);
-    this.bottleStatusbar.setPercentage(
-      this.bottleThrowManager.bottleCollected * 10
+    this.services.bottleThrowManager.bottleThrowAvailable = true;
+    bottle.isCollected = true;
+    this.collectedBottles++;
+    this.services.world.statusBars.bottle.setPercentage(
+      this.collectedBottles * 10
     );
+    this.services.sounds.playAudio("bottle_collect");
+    this.deleteBottle(bottle);
   }
 
   /**
@@ -128,11 +110,10 @@ class CollectablesObjects {
    * @private
    */
   _handleCoinCollection(coin) {
-    this.coinsCollected++;
-    coin.coinSound();
+    this.collectedCoins++;
+    this.services.sounds.playAudio("coin_collect");
     this.deleteCoin(coin);
-    this.coinStatusBar.setPercentage(this.coinsCollected * 5);
-    this._checkHealthRestore();
+    this.services.world.statusBars.coin.setPercentage(this.collectedCoins * 5);
   }
 
   /**
@@ -140,9 +121,10 @@ class CollectablesObjects {
    * @private
    */
   _checkHealthRestore() {
-    if (this.coinsCollected >= 20) {
-      this._restoreCharacterHealth();
-      this._resetCoinsIfHealthFull();
+    if (this.collectedCoins <= 18) return;
+
+    if (this.collectedCoins >= 20) {
+      this.hasReachedCoinThreshold = true;
     }
   }
 
@@ -150,19 +132,26 @@ class CollectablesObjects {
    * Restores character's health to full.
    * @private
    */
-  _restoreCharacterHealth() {
-    this.character.hp = 100;
-    this.characterHPBar.setPercentage(this.character.hp);
-    this.sounds.playAudio("hp_restored");
+  restoreCharacterHealth() {
+    if (this.hasReachedCoinThreshold && this.services.world.keyboard.S) {
+      this.services.character.hp = 100;
+      this.hasReachedCoinThreshold = false;
+      this.collectedCoins = 0;
+      this.services.world.statusBars.character.setPercentage(
+        this.services.character.hp
+      );
+      this.services.world.statusBars.coin.setPercentage(0);
+      this.services.sounds.playAudio("hp_restored");
+    }
   }
 
-  /**
-   * Resets coin count if character's health is full.
-   * @private
-   */
-  _resetCoinsIfHealthFull() {
-    if (this.character.hp >= 100 && this.coinsCollected >= 20) {
-      this.coinsCollected = 0;
+  checkBottleThreshold() {
+    if (this.collectedBottles <= 8) return;
+
+    if (this.collectedBottles >= 10) {
+      this.hasReachedBottleThreshold = true;
+    } else {
+      this.hasReachedBottleThreshold = false;
     }
   }
 
@@ -173,12 +162,11 @@ class CollectablesObjects {
    * @private
    */
   _deleteCollectable(object, collectionType) {
-    const collection = this.level[collectionType];
+    const collection = this.services.world.level[collectionType];
     const index = collection.indexOf(object);
 
     if (index > -1) {
       collection.splice(index, 1);
-      this.world.draw();
     }
   }
 
@@ -196,5 +184,9 @@ class CollectablesObjects {
    */
   deleteCoin(coin) {
     this._deleteCollectable(coin, "collectableCoins");
+  }
+
+  calculatePercentage(collected, total) {
+    return (collected / total) * 100;
   }
 }
