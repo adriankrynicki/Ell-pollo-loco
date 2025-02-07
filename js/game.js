@@ -1,202 +1,19 @@
-let canvas;
-let world;
-let keyboardActive = true;
-let keyboard = new Keyboard();
-let musicOff = document.getElementById("music-off");
-let musicON = document.getElementById("music-on");
-let soundOn = document.getElementById("sound-on");
-let soundOff = document.getElementById("sound-off");
-let playGameButton = document.getElementById("playGameButton");
-let gameContainer = document.getElementById("game-container");
-let responsiveButtonsContainer = document.getElementById("responsive-buttons-container");
-let pauseButton = document.getElementById("pause-game");
-let soundsOn = false;
-let musicOn = false;
-let gameOverTimeout;
-let timerInterval;
-let currentFormattedTime = "0:00:00";
-let finalGameTime = "0:00:00";
-
-async function playGame() {
-  prepareUIForGameStart();
-  initializeWorld();
-
+/**
+ * Helper function to get the World instance
+ * @returns {World} The current World instance
+ */
+const getWorld = () => {
   try {
-    await loadGameResources();
-    finalizeGameStart();
-    startTimer();
-  } catch (error) {
-    console.error("Error loading game resources:", error);
+      return World.getInstance();
+  } catch (e) {
+      return null;
   }
-}
+};
 
-function startTimer() {
-  resetTimerIfExists();
-  initializeTimerVariables();
-  startTimerLoop();
-}
-
-function resetTimerIfExists() {
-  if (timerInterval) {
-    cancelAnimationFrame(timerInterval);
-  }
-}
-
-function initializeTimerVariables() {
-  window.gameTime = {
-    total: 0,
-    lastUpdate: 0,
-    container: document.getElementById("time-container"),
-  };
-}
-
-function startTimerLoop() {
-  timerInterval = requestAnimationFrame(updateTimer);
-}
-
-function updateTimer(timestamp) {
-  if (!world?.gameState.gamePaused) {
-    updateTimeIfNeeded(timestamp);
-  }
-  if (world && !world.gameState.gameOver) {
-    timerInterval = requestAnimationFrame(updateTimer);
-  }
-}
-
-function updateTimeIfNeeded(timestamp) {
-  if (timestamp - gameTime.lastUpdate >= 100) {
-    gameTime.total++;
-    updateTimeDisplay();
-    gameTime.lastUpdate = timestamp;
-  }
-}
-
-function updateTimeDisplay() {
-  const formattedTime = formatTime(gameTime.total);
-  if (gameTime.container.innerHTML !== formattedTime) {
-    gameTime.container.innerHTML = formattedTime;
-    finalGameTime = formattedTime;
-  }
-}
-
-function formatTime(time) {
-  const minutes = Math.floor(time / 600);
-  const seconds = Math.floor((time % 600) / 10);
-  const tenths = (time % 10) * 10;
-
-  return `${minutes}:${seconds.toString().padStart(2, "0")}:${tenths
-    .toString()
-    .padStart(2, "0")}`;
-}
-
-function stopTimer() {
-  if (timerInterval) {
-    cancelAnimationFrame(timerInterval);
-    timerInterval = undefined;
-  }
-  return finalGameTime;
-}
-
-function prepareUIForGameStart() {
-  let mainContainer = document.getElementsByTagName("main")[0];
-  mainContainer.classList.remove("start-screen");
-
-  let navButtons = document.getElementById("nav-controls");
-  navButtons.classList.add("d-none");
-  navButtons.classList.remove("nav-controls");
-
-  let loadingText = document.getElementById("loadingText");
-  loadingText.classList.remove("d-none");
-  loadingText.classList.add("loading-text");
-  gameContainer.classList.remove("game-container");
-
-  gameContainer.innerHTML = "";
-}
-
-function initializeWorld() {
-  canvas = document.getElementById("canvas");
-  world = new World(canvas, keyboard);
-
-  world.gameState = {
-    gamePaused: false,
-    gameWon: false,
-    gameLost: false,
-    gameStateHandled: false,
-    endbossBarActivated: false,
-  };
-
-  if (gameOverTimeout) {
-    clearTimeout(gameOverTimeout);
-  }
-
-  handleGameEndHTMLElements();
-}
-
-function handleGameEndHTMLElements() {
-  world.services.gameStateManager.setGameEndCallback((gameState) => {
-    if (!gameState) gameState = {};
-
-    let audioControls = document.getElementById("audio-controls");
-    audioControls.classList.add("d-none");
-    audioControls.classList.remove("audio-controls");
-
-    let timeContainer = document.getElementById("time-container");
-
-    timeContainer.classList.add("d-none");
-    timeContainer.classList.remove("time-container");
-
-    stopTimer();
-
-    gameOverTimeout = setTimeout(() => {
-      gameContainer.innerHTML = gameOverHTML(gameState);
-      if (gameState) {
-        responsiveButtonsContainer.classList.add("d-none");
-        responsiveButtonsContainer.classList.remove("responsive-buttons-container");
-      }
-    }, 4000);
-  });
-}
-
-async function loadGameResources() {
-  await Promise.all([
-    initializeLevel1(world.services),
-    new Promise((resolve) => {
-      world.services.sounds.initializeAudio();
-      world.services.sounds.toggleGameSounds(true);
-      resolve();
-    }),
-    new Promise((resolve) => setTimeout(resolve, 2000)),
-  ]);
-}
-
-function finalizeGameStart() {
-  let loadingText = document.getElementById("loadingText");
-  loadingText.classList.add("d-none");
-  loadingText.classList.remove("loading-text");
-
-  let timeContainer = document.getElementById("time-container");
-  timeContainer.classList.remove("d-none");
-  timeContainer.classList.add("time-container");
-
-  let audioControls = document.getElementById("audio-controls");
-  audioControls.classList.remove("d-none");
-  audioControls.classList.add("audio-controls");
-  toggleSoundButtons(false);
-  toggleMusicButtons(false);
-
-  if (window.innerWidth < 1000) {
-    if (responsiveButtonsContainer) {
-      responsiveButtonsContainer.classList.remove("d-none");
-      responsiveButtonsContainer.classList.add("responsive-buttons-container");
-      responsiveButtonsContainer.innerHTML = responsiveControlsHTML();
-    }
-  }
-
-  canvas.classList.remove("d-none");
-  world.setLevel(level1);
-  keyboardActive = true;
-}
-
+/**
+ * Object with functions for handling touch input on mobile devices
+ * @type {Object}
+ */
 const controls = {
   left: (isPressed) => {
     keyboard.LEFT = isPressed;
@@ -215,147 +32,229 @@ const controls = {
   },
 };
 
-function updateGameContainer(section) {
-  let contentMap = {
-    info: controlsButtonsHTML,
-    credits: creditsButtonsHTML,
-    play: playGameButtonHTML,
-  };
+/**
+ * Global variables for the game
+ * @type {Object}
+ */
+let canvas;
+let keyboardActive = false;
+let keyboard = new Keyboard();
+let gameOverTimeout;
+let timerInterval;
+let currentFormattedTime = "0:00:00";
+let finalGameTime = "0:00:00";
 
-  if (contentMap[section]) {
-    gameContainer.innerHTML = contentMap[section]();
+/**
+ * Starts the game and initializes all necessary components
+ */
+async function playGame() {
+  prepareUIForGameStart();
+  initializeWorld();
+
+  try {
+    await loadGameResources();
+    finalizeGameStart();
+    startTimer();
+  } catch (error) {
+    console.error("Error loading game resources:", error);
   }
 }
 
-function updateCreditsContainer(section) {
-  let contentMap = {
-    privacyPolicy: privacyPolicyHTML,
-    legalNotice: legalNoticeHTML,
-  };
-
-  if (contentMap[section]) {
-    let creditsContent = document.getElementById("credits-content");
-    if (creditsContent) {
-      creditsContent.innerHTML = contentMap[section]();
-    } else {
-      console.error("Not found credits-content");
-    }
-  }
+/**
+ * Prepares the UI for the game start
+ */
+function prepareUIForGameStart() {
+  uiElements.main.classList.remove("start-screen");
+  uiElements.nav.classList.add("d-none");
+  uiElements.nav.classList.remove("nav-controls");
+  uiElements.loadingText.classList.remove("d-none");
+  uiElements.loadingText.classList.add("loading-text");
+  uiElements.gameContainer.classList.remove("game-container");
+  uiElements.gameContainer.innerHTML = "";
 }
 
-function toggleMusicButtons(isMusicOff) {
-  if (isMusicOff) {
-    musicON.classList.add("d-none");
-    musicON.classList.remove("button-style", "audio-button");
-    musicOff.classList.remove("d-none");
-    musicOff.classList.add("button-style", "audio-button");
-  } else {
-    musicON.classList.remove("d-none");
-    musicON.classList.add("button-style", "audio-button");
-    musicOff.classList.add("d-none");
-    musicOff.classList.remove("button-style", "audio-button");
-  }
-}
+/**
+ * Initializes the game world and resets necessary parameters
+ */
+function initializeWorld() {
+  canvas = document.getElementById("canvas");
+  World.instance = null;
+  new World(canvas, keyboard);
 
-function toggleSoundButtons(isSoundOff) {
-  if (isSoundOff) {
-    soundOn.classList.add("d-none");
-    soundOn.classList.remove("button-style", "audio-button");
-    soundOff.classList.remove("d-none");
-    soundOff.classList.add("button-style", "audio-button");
-  } else {
-    soundOn.classList.remove("d-none");
-    soundOn.classList.add("button-style", "audio-button");
-    soundOff.classList.add("d-none");
-    soundOff.classList.remove("button-style", "audio-button");
-  }
-}
-
-function handleSoundToggle() {
-  let isSoundButtonVisible = !soundOn.classList.contains("d-none");
-  if (world && world.services.sounds) {
-    world.services.sounds.toggleGameSounds(!isSoundButtonVisible);
-    toggleSoundButtons(isSoundButtonVisible);
-  }
-}
-
-function handleMusicToggle() {
-  let isMusicOff = !musicON.classList.contains("d-none");
-  if (world && world.services.sounds) {
-    world.services.sounds.toggleMusic(!isMusicOff);
-    toggleMusicButtons(isMusicOff);
-  }
-}
-
-function openInGameMenu() {
-  keyboardActive = false;
-  world.pauseGame();
-
-  soundsOn = !soundOff.classList.contains("d-none");
-  musicOn = !musicOff.classList.contains("d-none");
-
-  if (world && world.services.sounds) {
-    world.services.sounds.toggleGameSounds(true);
-    world.services.sounds.toggleMusic(true);
-  }
-
-  gameContainer.innerHTML = inGameMenuHTML();
-  responsiveButtonsContainer.classList.add("d-none");
-  responsiveButtonsContainer.classList.remove("responsive-buttons-container");
-}
-
-function closeInGameMenu() {
-  keyboardActive = true;
-  resetKeyboard();
-  world.resumeGame();
-
-  if (world && world.services.sounds) {
-    world.services.sounds.toggleGameSounds(!soundsOn);
-    world.services.sounds.toggleMusic(!musicOn);
-  }
-
-  gameContainer.innerHTML = "";
-  responsiveButtonsContainer.classList.remove("d-none");
-  responsiveButtonsContainer.classList.add("responsive-buttons-container");
-}
-
-function updateUIElements(uiElements) {
-  canvas.classList.add("d-none");
-  uiElements.nav.classList.add("nav-controls");
-  uiElements.nav.classList.remove("d-none");
-  uiElements.audio.classList.remove("audio-controls");
-  uiElements.audio.classList.add("d-none");
-  uiElements.main.classList.add("start-screen");
-  uiElements.time.classList.add("d-none");
-  uiElements.time.classList.remove("time-container");
-}
-
-function backToMenu() {
-  const uiElements = {
-    main: document.getElementsByTagName("main")[0],
-    nav: document.getElementById("nav-controls"),
-    audio: document.getElementById("audio-controls"),
-    time: document.getElementById("time-container"),
-  };
-  gameContainer.innerHTML = "";
-
-  if (world) {
-    world.pauseGame();
-    world.resetGame();
-    responsiveButtonsContainer.classList.add("d-none");
-    responsiveButtonsContainer.classList.remove("responsive-buttons-container");
-  }
   if (gameOverTimeout) {
     clearTimeout(gameOverTimeout);
-    stopTimer();
-    gameOverTimeout = null;
   }
 
-  updateUIElements(uiElements);
-  gameContainer.classList.add("game-container");
-  gameContainer.innerHTML = playGameButtonHTML();
+  handleGameEndHTMLElements();
 }
 
+/**
+ * Loads the game resources and initializes the level
+ */
+async function loadGameResources() {
+  const world = getWorld();
+  await Promise.all([
+    initializeLevel1(world.services),
+    new Promise((resolve) => {
+      world.services.sounds.initializeAudio();
+      world.services.sounds.toggleGameSounds(true);
+      resolve();
+    }),
+    new Promise((resolve) => setTimeout(resolve, 4000)),
+  ]);
+}
+
+/**
+ * Finalizes the game start and sets up the game environment
+ */
+function finalizeGameStart() {
+  const world = getWorld();
+  updateUIForGameStart();
+  toggleSoundButtons(false);
+  toggleMusicButtons(false);
+  responsiveButtons();
+  keyboardActivation();
+
+  canvas.classList.remove("d-none");
+  world.setLevel(level1);
+}
+
+/**
+ * Removing loading screen and adding time and audio controls
+ */
+function updateUIForGameStart() {
+  uiElements.loadingText.classList.add("d-none");
+  uiElements.loadingText.classList.remove("loading-text");
+  uiElements.time.classList.remove("d-none");
+  uiElements.time.classList.add("time-container");
+  uiElements.audio.classList.remove("d-none");
+  uiElements.audio.classList.add("audio-controls");
+}
+
+/**
+ * Handles the responsive buttons for mobile devices
+ */
+function responsiveButtons() {
+  const hasPhysicalKeyboard =
+    window.matchMedia("(pointer: fine)").matches &&
+    !("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+  if (!hasPhysicalKeyboard) {
+    uiElements.touchControls.classList.remove("d-none");
+    uiElements.touchControls.classList.add("responsive-buttons-container");
+    uiElements.touchControls.innerHTML = responsiveControlsHTML();
+  }
+}
+
+function keyboardActivation() {
+  setTimeout(() => {
+    keyboardActive = true;
+  }, 600);
+}
+
+/**
+ * Initializes the timer variables for the game
+ */
+function initializeTimerVariables() {
+  window.gameTime = {
+    total: 0,
+    lastUpdate: 0,
+    container: document.getElementById("time-container"),
+  };
+}
+
+/**
+ * Starts the timer and initializes the timer variables
+ */
+function startTimer() {
+  resetTimerIfExists();
+  initializeTimerVariables();
+  startTimerLoop();
+}
+
+/**
+ * Resets the timer if it exists
+ */
+function resetTimerIfExists() {
+  if (timerInterval) {
+    cancelAnimationFrame(timerInterval);
+  }
+}
+
+/**
+ * Starts the timer loop
+ */
+function startTimerLoop() {
+  timerInterval = requestAnimationFrame(updateTimer);
+}
+
+/**
+ * Updates the timer and handles the game state
+ * @param {number} timestamp - The current timestamp
+ */
+function updateTimer(timestamp) {
+  const world = getWorld();
+  if (!world?.gameState.gamePaused) {
+    updateTimeIfNeeded(timestamp);
+  }
+  if (world && !world.gameState.gameOver) {
+    timerInterval = requestAnimationFrame(updateTimer);
+  }
+}
+
+/**
+ * Updates the time if needed and handles the game state
+ * @param {number} timestamp - The current timestamp
+ */
+function updateTimeIfNeeded(timestamp) {
+  if (timestamp - gameTime.lastUpdate >= 100) {
+    gameTime.total++;
+    updateTimeDisplay();
+    gameTime.lastUpdate = timestamp;
+  }
+}
+
+/**
+ * Updates the time display and handles the game state
+ */
+function updateTimeDisplay() {
+  const formattedTime = formatTime(gameTime.total);
+  if (gameTime.container.innerHTML !== formattedTime) {
+    gameTime.container.innerHTML = formattedTime;
+    finalGameTime = formattedTime;
+  }
+}
+
+/**
+ * Formats the time into a string
+ * @param {number} time - The time to format
+ * @returns {string} The formatted time string
+ */
+function formatTime(time) {
+  const minutes = Math.floor(time / 600);
+  const seconds = Math.floor((time % 600) / 10);
+  const tenths = (time % 10) * 10;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}:${tenths
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+/**
+ * Stops the timer and returns the final game time
+ * @returns {string} The final game time
+ */
+function stopTimer() {
+  if (timerInterval) {
+    cancelAnimationFrame(timerInterval);
+    timerInterval = undefined;
+  }
+  return finalGameTime;
+}
+
+/**
+ * Resets the keyboard input
+ */
 function resetKeyboard() {
   keyboard.UP = false;
   keyboard.LEFT = false;
@@ -363,78 +262,9 @@ function resetKeyboard() {
   keyboard.D = false;
 }
 
-function restartGame() {
-  let audioControls = document.getElementById("audio-controls");
-  let timeContainer = document.getElementById("time-container");
-  gameContainer.innerHTML = "";
-  if (gameOverTimeout) {
-    clearTimeout(gameOverTimeout);
-    stopTimer();
-    gameOverTimeout = null;
-  }
-
-  world = null;
-
-  playGame();
-
-  audioControls.classList.add("d-none");
-  audioControls.classList.remove("audio-controls");
-  timeContainer.classList.add("d-none");
-  timeContainer.classList.remove("time-container");
-  canvas.classList.add("d-none");
-  responsiveButtonsContainer.classList.add("d-none");
-  responsiveButtonsContainer.classList.remove("responsive-buttons-container");
-}
-
-function initializeAudioListeners() {
-  const audioControls = document.getElementById('audio-controls');
-  audioControls.addEventListener('click', (e) => {
-    const target = e.target;
-    if (target.matches('#sound-on, #sound-off')) {
-      handleSoundToggle();
-    } else if (target.matches('#music-on, #music-off')) {
-      handleMusicToggle();
-    }
-  });
-  pauseButton.addEventListener("click", openInGameMenu);
-}
-
-const sectionHandlers = {
-  info: () => {
-    updateGameContainer("info");
-    showControls();
-  },
-  play: () => updateGameContainer("play"),
-  credits: () => {
-    updateGameContainer("credits");
-    updateCreditsContainer("legalNotice");
-  },
-  legalNotice: () => updateCreditsContainer("legalNotice"),
-  privacyPolicy: () => updateCreditsContainer("privacyPolicy"),
-};
-
-function showControls() {
-  let infoContent = document.getElementById('info-content');
-  infoContent.innerHTML = controlsHTML();
-}
-
-function showGameMechanics() {
-  let infoContent = document.getElementById('info-content');
-  infoContent.innerHTML = gameMechanicsHTML();
-}
-
-function initializeNavigationListeners() {
-  document.addEventListener("click", (e) => {
-    let button = e.target.closest("[data-section]");
-    if (!button) return;
-
-    let section = button.dataset.section;
-    if (sectionHandlers[section]) {
-      sectionHandlers[section]();
-    }
-  });
-}
-
+/**
+ * Initializes the keyboard listeners for the game
+ */
 function initializeKeyboardListeners() {
   window.addEventListener("keydown", (e) => {
     if (!keyboardActive) return;
@@ -457,28 +287,17 @@ function initializeKeyboardListeners() {
   });
 }
 
-function initializePlayGameButton() {
-  gameContainer.innerHTML = playGameButtonHTML();
-}
-
-initializeAudioListeners();
-initializeNavigationListeners();
-if (keyboardActive) {
+/**
+ * Initializes the keyboard listeners for the game
+ */
+if (!keyboardActive) {
   initializeKeyboardListeners();
 }
-document.addEventListener("DOMContentLoaded", () => {
-  initializePlayGameButton();
-});
+
+/**
+ * Handles the game over state and resets the keyboard input
+ */
 document.addEventListener("gameOver", () => {
   resetKeyboard();
   keyboardActive = false;
 });
-
-const domElements = {
-  canvas: document.getElementById('canvas'),
-  gameContainer: document.getElementById('game-container'),
-  audioControls: document.getElementById('audio-controls'),
-  timeContainer: document.getElementById('time-container'),
-  // ... weitere häufig verwendete Elemente
-};
-

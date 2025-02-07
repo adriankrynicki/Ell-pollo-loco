@@ -1,44 +1,69 @@
+/**
+ * Manages the game state, including pause/resume functionality, position tracking,
+ * and game end conditions.
+ */
 class GameStateManager {
-  // Class Fields
+  /**
+   * Stores positions of game entities when game is paused
+   * @type {Object.<string, any>}
+   */
   pausedPositions = {};
-  gameStateHandled = false;
+  /**
+   * Callback function to be called when the game ends
+   * @type {Function}
+   */
   gameEndCallback = null;
+  /**
+   * Reference to the current level
+   * @type {Level}
+   */
   level;
 
+  /**
+   * Constructor for GameStateManager
+   * @param {Object} services - Services object containing various game components
+   */
   constructor(services) {
     this.services = services;
-    this.world = services.world;
-    this.gameState = this.world.gameState;
     this.sounds = services.sounds;
-    this.bottleThrowManager = services.bottleThrowManager;
-    this.collisionHandler = services.collisionHandler;
     this.animationManager = services.animationManager;
-    this.screenManager = services.screenManager;
   }
 
-  // Neue Methode zum Initialisieren der abhängigen Services
+  /**
+   * Initializes the game state manager
+   * @param {Level} level - The current level
+   */
   initialize(level) {
     this.level = level;
     this.endboss = this.getEndboss();
 
-    // Erst jetzt Animationen hinzufügen
-    this.addAnimations();
+    this.startCheck();
   }
 
-  addAnimations() {
+  /**
+   * Adds the game state animation
+   */
+  startCheck() {
     this.animationManager.addAnimation({
       update: (deltaTime) => {
         if (this.level) {
           this.checkWinOrLose();
         }
-      }
+      },
     });
   }
 
+  /**
+   * Retrieves the endboss from the level
+   * @returns {Endboss} The endboss instance
+   */
   getEndboss() {
-    return this.level?.enemies?.find(enemy => enemy instanceof Endboss);
+    return this.level?.enemies?.find((enemy) => enemy instanceof Endboss);
   }
 
+  /**
+   * Pauses the game and saves the current positions
+   */
   pauseGame() {
     this.services.world.gameState.gamePaused = true;
     this.saveCurrentPositions();
@@ -46,6 +71,9 @@ class GameStateManager {
     this.sounds.pauseAudio("snoring");
   }
 
+  /**
+   * Resumes the game and restores the saved positions
+   */
   resumeGame() {
     this.restorePositions();
     this.services.world.gameState.gamePaused = false;
@@ -55,12 +83,18 @@ class GameStateManager {
     }
   }
 
+  /**
+   * Saves the current positions of the character, enemies, and bottles
+   */
   saveCurrentPositions() {
     this.saveCharacterPosition();
     this.saveEnemyPositions();
     this.saveBottlePositions();
   }
 
+  /**
+   * Saves the current position of the character
+   */
   saveCharacterPosition() {
     this.pausedPositions.character = {
       x: this.services.character.x,
@@ -70,6 +104,9 @@ class GameStateManager {
     };
   }
 
+  /**
+   * Saves the current positions of the enemies
+   */
   saveEnemyPositions() {
     this.pausedPositions.enemies = this.level.enemies.map((enemy) => ({
       number: enemy.number,
@@ -81,9 +118,12 @@ class GameStateManager {
     }));
   }
 
+  /**
+   * Saves the current positions of the bottles
+   */
   saveBottlePositions() {
     this.pausedPositions.bottles = Array.from(
-      this.bottleThrowManager.throwableBottles.values()
+      this.services.bottleThrowManager.throwableBottles.values()
     ).map((bottle) => ({
       x: bottle.x,
       y: bottle.y,
@@ -92,12 +132,18 @@ class GameStateManager {
     }));
   }
 
+  /**
+   * Restores the saved positions of the character, enemies, and bottles
+   */
   restorePositions() {
     this.restoreCharacterPosition();
     this.restoreEnemyPositions();
     this.restoreBottlePositions();
   }
 
+  /**
+   * Restores the saved position of the character
+   */
   restoreCharacterPosition() {
     if (this.pausedPositions.character) {
       this.services.character.x = this.pausedPositions.character.x;
@@ -107,6 +153,9 @@ class GameStateManager {
     }
   }
 
+  /**
+   * Restores the saved positions of the enemies
+   */
   restoreEnemyPositions() {
     this.pausedPositions.enemies?.forEach((pos) => {
       const enemy = this.level.enemies.find(
@@ -116,6 +165,11 @@ class GameStateManager {
     });
   }
 
+  /**
+   * Restores the saved position of an enemy
+   * @param {Enemy} enemy - The enemy instance
+   * @param {Object} pos - The saved position object
+   */
   enemyPosition(enemy, pos) {
     if (!enemy) return;
 
@@ -125,10 +179,13 @@ class GameStateManager {
     enemy.speedY = pos.speedY;
   }
 
+  /**
+   * Restores the saved positions of the bottles
+   */
   restoreBottlePositions() {
     this.pausedPositions.bottles?.forEach((pos, index) => {
       const bottles = Array.from(
-        this.bottleThrowManager.throwableBottles.values()
+        this.services.bottleThrowManager.throwableBottles.values()
       );
       if (bottles[index]) {
         bottles[index].x = pos.x;
@@ -139,69 +196,111 @@ class GameStateManager {
     });
   }
 
+  /**
+   * Checks if the game has been won or lost
+   */
   checkWinOrLose() {
     if (this.services.character.hp < 20) {
-      if (this.services.character.hp <= 0 && !this.services.character.characterIsDead) {
-        this.handleLoseSound();
-        this.collisionHandler.damageImmune = true;
+      if (
+        this.services.character.hp <= 0 &&
+        !this.services.character.characterIsDead
+      ) {
+        this.handleGameLost();
       }
     } else if (this.services.character.isInBossArea) {
-      
       if (this.endboss.hp <= 0 && !this.endboss.endbossIsDead) {
-        this.handleWinSound();
-        this.collisionHandler.damageImmune = true;
+        this.handleGameWon();
       }
     }
   }
 
-  handleLoseSound() {
+  /**
+   * Handles the game loss
+   */
+  handleGameLost() {
+    this.setGameLostState();
+    this.playGameLostSound();
+    this.handleGameEnd(false);
+  }
+
+  /**
+   * Sets the game lost state
+   */
+  setGameLostState() {
+    this.services.collisionHandler.damageImmune = true;
     this.services.world.gameState.gameLost = true;
     this.services.character.characterIsDead = true;
+  }
 
-    this.handleGameOver();
-    this.sounds.playAudio("character_dead");
+  /**
+   * Plays the game lost sound
+   */
+  playGameLostSound() {
     setTimeout(() => {
       this.sounds.playAudio("lose");
     }, 1000);
-
-    if (this.gameEndCallback) {
-      this.gameEndCallback({
-        won: false,
-        finalTime: document.getElementById("time-container").innerHTML,
-      });
-    }
   }
 
-  handleWinSound() {
+  /**
+   * Handles the game win
+   */
+  handleGameWon() {
+    this.setGameWonState();
+    this.playGameWonSound();
+    this.handleGameEnd(true);
+  }
+
+  /**
+   * Sets the game won state
+   */
+  setGameWonState() {
+    this.services.collisionHandler.damageImmune = true;
     this.services.world.gameState.gameWon = true;
     this.endboss.endbossIsDead = true;
-    
-    this.handleGameOver();
+  }
+
+  /**
+   * Plays the game won sound
+   */
+  playGameWonSound() {
     setTimeout(() => {
       this.sounds.playAudio("win");
     }, 800);
+  }
+
+  /**
+   * Handles the game end
+   * @param {boolean} isVictory - Indicates if the game was won
+   */
+  handleGameEnd(isVictory) {
+    this.handleGameOver();
 
     if (this.gameEndCallback) {
       this.gameEndCallback({
-        won: true,
+        won: isVictory,
         finalTime: document.getElementById("time-container").innerHTML,
       });
     }
   }
 
+  /**
+   * Handles the game over state
+   */
   handleGameOver() {
     this.sounds.pauseAudio("background_music");
     document.dispatchEvent(new CustomEvent("gameOver"));
 
     setTimeout(() => {
-      
       this.pauseGame();
-
       this.sounds.toggleGameSounds(true);
       this.sounds.toggleMusic(true);
     }, 3000);
   }
 
+  /**
+   * Sets the callback function to be called when the game ends
+   * @param {Function} callback - The callback function
+   */
   setGameEndCallback(callback) {
     this.gameEndCallback = callback;
   }

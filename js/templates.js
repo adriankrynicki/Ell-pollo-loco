@@ -1,4 +1,9 @@
-function controlsButtonsHTML() { return /*html*/ `
+/**
+ * Generates the HTML for the control buttons in the main menu.
+ * @returns {string} HTML string containing the control buttons
+ */
+function controlsButtonsHTML() {
+  return /*html*/ `
   <div class="info-container">
     <div class="controls-nav">
       <button class="button-style credits-button" onclick="showControls()">
@@ -13,51 +18,67 @@ function controlsButtonsHTML() { return /*html*/ `
     </div>
     <div id="info-content" class="info-content"></div>
   </div>
-  `; 
-}
-
-function controlsHTML() {
-  return /*html*/ `
-  <div id="controls-content" class="controls-content">
-  <h1>Pepe Controls</h1>
-  <div class="controls-container">
-    <div class="arrow-keys-container">
-      <p>Use the arrow keys to move Pepe.</p>
-      <div class="arrow-keys-content">
-        <div class="up-key-container">
-          <div class="arrow-key-border">
-            <img class="arrow-key" src="img/arrow_up.png" alt="up" />
-          </div>
-          <p>Jump</p>
-        </div>
-        <div class="left-right-key-container">
-          <div class="left-key-container">
-            <div class="arrow-key-border">
-              <img class="arrow-key" src="img/arrow_left.png" alt="up" />
-            </div>
-            <p>Move Left</p>
-          </div>
-          <div class="right-key-container">
-            <div class="arrow-key-border">
-              <img class="arrow-key" src="img/arrow_right.png" alt="up" />
-            </div>
-            <p>Move Right</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="throw-bottle-container">
-      <p>Press "D" to throw a bottle.</p>
-      <div class="d-key-border">
-        <p>D</p>
-      </div>
-    </div>
-  </div>
-</div>
   `;
 }
 
-function gameMechanicsHTML() { 
+/**
+ * Generates the HTML for the controls guide.
+ * @returns {string} HTML string containing the controls guide
+ */
+function controlsHTML() {
+  return /*html*/ `
+    <div id="controls-content" class="controls-content">
+      <h1>Pepe Controls</h1>
+      <div class="controls-container">
+        <div class="arrow-keys-container">
+          <p>Use the arrow keys to move Pepe.</p>
+          <div class="arrow-keys-content">
+            <div class="up-key-container">
+              <div class="arrow-key-border">
+                <img class="arrow-key" src="img/arrow_up.png" alt="up" />
+              </div>
+              <p>Jump</p>
+            </div>
+            <div class="left-right-key-container">
+              <div class="left-key-container">
+                <div class="arrow-key-border">
+                  <img class="arrow-key" src="img/arrow_left.png" alt="up" />
+                </div>
+                <p>Move Left</p>
+              </div>
+              <div class="right-key-container">
+                <div class="arrow-key-border">
+                  <img class="arrow-key" src="img/arrow_right.png" alt="up" />
+                </div>
+                <p>Move Right</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="special-controls-container">
+          <div class="throw-bottle-container">
+            <p>Press "D" to throw a bottle.</p>
+            <div class="d-key-border">
+              <p>D</p>
+            </div>
+          </div>
+          <div class="restore-health-container">
+            <p>Press "S" to restore health.</p>
+            <div class="d-key-border">
+              <p>S</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Generates the HTML for the game mechanics guide.
+ * @returns {string} HTML string containing the game mechanics guide
+ */
+function gameMechanicsHTML() {
   return /*html*/ `
   <div class="how-to-play-content" id="howtoplay">
     <h1>How to Play</h1>
@@ -104,8 +125,13 @@ function gameMechanicsHTML() {
       </p>
     </div>
   </div>
-  `; }
+  `;
+}
 
+/**
+ * Generates the HTML for the play game button.
+ * @returns {string} HTML string containing the play game button
+ */
 function playGameButtonHTML() {
   return /*html*/ `
     <button onclick="playGame()" id="playGameButton" class="play-game-button button-style">
@@ -114,6 +140,10 @@ function playGameButtonHTML() {
   `;
 }
 
+/**
+ * Generates the HTML for the in-game menu.
+ * @returns {string} HTML string containing the in-game menu
+ */
 function inGameMenuHTML() {
   return /*html*/ `
     <div class="in-game-menu-container background-color">
@@ -129,6 +159,11 @@ function inGameMenuHTML() {
   `;
 }
 
+/**
+ * Generates the HTML for the game over screen.
+ * @param {object} gameState - The current game state
+ * @returns {string} HTML string containing the game over screen
+ */
 function gameOverHTML(gameState) {
   return /*html*/ `
     <div class="in-game-menu-container">
@@ -144,6 +179,10 @@ function gameOverHTML(gameState) {
   `;
 }
 
+/**
+ * Generates the HTML for the credits buttons.
+ * @returns {string} HTML string containing the credits buttons
+ */
 function creditsButtonsHTML() {
   return /*html*/ `
     <div class="credits-container">
@@ -163,6 +202,10 @@ function creditsButtonsHTML() {
   `;
 }
 
+/**
+ * Generates the HTML for the legal notice.
+ * @returns {string} HTML string containing the legal notice
+ */
 function legalNoticeHTML() {
   return /*html*/ `
     <div class="legal-notice-container">
@@ -179,6 +222,10 @@ function legalNoticeHTML() {
   `;
 }
 
+/**
+ * Generates the HTML for the privacy policy.
+ * @returns {string} HTML string containing the privacy policy
+ */
 function privacyPolicyHTML() {
   return /*html*/ `
       <div class="privacy-policy-container">
@@ -293,12 +340,14 @@ function privacyPolicyHTML() {
   `;
 }
 
+/**
+ * Generates the HTML for the responsive controls.
+ * @returns {string} HTML string containing the responsive controls
+ */
 function responsiveControlsHTML() {
   return /*html*/ `
         <div class="buttons-left-container">
       <button
-        onmousedown="controls.jump(true)"
-        onmouseup="controls.jump(false)"
         ontouchstart="controls.jump(true)"
         ontouchend="controls.jump(false)"
         id="jump"
@@ -307,8 +356,6 @@ function responsiveControlsHTML() {
         Jump
       </button>
       <button
-        onmousedown="controls.left(true)"
-        onmouseup="controls.left(false)"
         ontouchstart="controls.left(true)"
         ontouchend="controls.left(false)"
         id="left"
@@ -319,8 +366,6 @@ function responsiveControlsHTML() {
     </div>
     <div class="buttons-right-container">
     <button
-        onmousedown="controls.heal(true)" 
-        onmouseup="controls.heal(false)"
         ontouchstart="controls.heal(true)"
         ontouchend="controls.heal(false)"
         id="heal"
@@ -329,8 +374,6 @@ function responsiveControlsHTML() {
         Heal
       </button>
       <button
-        onmousedown="controls.throwBottle(true)" 
-        onmouseup="controls.throwBottle(false)"
         ontouchstart="controls.throwBottle(true)"
         ontouchend="controls.throwBottle(false)"
         id="throw"
@@ -339,8 +382,6 @@ function responsiveControlsHTML() {
         Throw
       </button>
       <button
-        onmousedown="controls.right(true)"
-        onmouseup="controls.right(false)"
         ontouchstart="controls.right(true)"
         ontouchend="controls.right(false)"
         id="right"

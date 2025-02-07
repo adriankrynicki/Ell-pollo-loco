@@ -1,16 +1,48 @@
+/**
+ * Base class for all drawable objects
+ * @class
+ */
 class DrawableObject {
+  /**
+   * X-coordinate position of the object
+   * @type {number}
+   */
   x;
+  /**
+   * Y-coordinate position of the object
+   * @type {number}
+   */
   y;
+  /**
+   * Image element of the object
+   * @type {HTMLImageElement}
+   */
   img;
+  /**
+   * Width of the object
+   * @type {number}
+   */
   width;
+  /**
+   * Height of the object
+   * @type {number}
+   */
   height;
+  /**
+   * Image cache for loading images
+   * @type {Object}
+   */
   imageCach = {};
+  /**
+   * Current image index
+   * @type {number}
+   */
   currentImage = 0;
 
   /**
-   * Lädt ein einzelnes Bild
-   * @param {string} path - Pfad zum Bild
-   * @returns {Promise} Promise, das nach dem Laden des Bildes resolved wird
+   * Loads a single image
+   * @param {string} path - Path to the image
+   * @returns {Promise} Promise that resolves when image is loaded
    */
   loadImage(path) {
     this.img = new Image();
@@ -21,9 +53,9 @@ class DrawableObject {
   }
 
   /**
-   * Lädt mehrere Bilder und speichert sie im Cache
-   * @param {string[]} arr - Array von Bildpfaden
-   * @returns {Promise} Promise, das nach dem Laden aller Bilder resolved wird
+   * Loads multiple images and stores them in cache
+   * @param {string[]} arr - Array of image paths
+   * @returns {Promise} Promise that resolves when all images are loaded
    */
   loadImages(arr) {
     return Promise.all(
@@ -43,8 +75,8 @@ class DrawableObject {
   }
 
   /**
-   * Zeichnet das Objekt auf den Canvas
-   * @param {CanvasRenderingContext2D} ctx - Der Canvas-Kontext
+   * Draws the object on the canvas
+   * @param {CanvasRenderingContext2D} ctx - The canvas context
    */
   draw(ctx) {
     if (this.img && this.img.complete) {
@@ -63,8 +95,8 @@ class DrawableObject {
   }
 
   /**
-   * Fügt ein einzelnes Objekt zur Map hinzu
-   * @param {DrawableObject} mo - Das zu zeichnende Objekt
+   * Adds a single object to the map
+   * @param {DrawableObject} mo - The object to be drawn
    */
   addToMap(mo) {
     if (mo.otherDirection) {
@@ -79,8 +111,8 @@ class DrawableObject {
   }
 
   /**
-   * Spiegelt das Bild horizontal
-   * @param {DrawableObject} mo - Das zu spiegelnde Objekt
+   * Flips the image horizontally
+   * @param {DrawableObject} mo - The object to be flipped
    */
   flipImage(mo) {
     this.ctx.save();
@@ -90,8 +122,8 @@ class DrawableObject {
   }
 
   /**
-   * Stellt die ursprüngliche Ausrichtung des Bildes wieder her
-   * @param {DrawableObject} mo - Das zurückzuspiegelnde Objekt
+   * Restores the original image orientation
+   * @param {DrawableObject} mo - The object to be restored
    */
   flipImageBack(mo) {
     mo.x = mo.x * -1;
